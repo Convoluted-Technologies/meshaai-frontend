@@ -65,7 +65,60 @@ body {
   border-bottom: 1px solid #e2e8f0;
 }
 
-/* Floating animation keyframes */
+/* Entrance Animations */
+@keyframes slideNavDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-nav-entrance {
+  animation: slideNavDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes heroFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-hero-entrance {
+  animation: heroFadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes bgZoomReveal {
+  from {
+    transform: scale(1.18);
+    opacity: 0.3;
+  }
+  to {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+.animate-bg-reveal {
+  animation: bgZoomReveal 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Staggered Delay Utilities */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+/* Floating Sizzle Animation */
 @keyframes floatSizzle {
   0%, 100% {
     transform: translateY(0px) rotate(0deg);
@@ -77,19 +130,6 @@ body {
 
 .animate-float {
   animation: floatSizzle 4s infinite ease-in-out;
-}
-
-@keyframes pulseGlow {
-  0%, 100% {
-    box-shadow: 0 0 15px rgba(220, 38, 38, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 30px rgba(245, 158, 11, 0.6);
-  }
-}
-
-.glow-pulse {
-  animation: pulseGlow 3s infinite ease-in-out;
 }
 
 /* Custom scrollbars */

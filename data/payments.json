@@ -1,5 +1,19 @@
 [
   {
+    "id": "pay_1790265529771",
+    "txRef": "TX_MSH-6F55S_1790265529485",
+    "orderCode": "MSH-6F55S",
+    "amountKobo": 1080000,
+    "currency": "NGN",
+    "status": "SUCCESSFUL",
+    "customerPhone": "08012345678",
+    "checkoutUrl": "http://localhost:3000/checkout/mock?tx_ref=TX_MSH-6F55S_1790265529485&amount=10800&code=MSH-6F55S",
+    "createdAt": "2026-09-24T15:58:49.771Z",
+    "updatedAt": "2026-09-24T15:58:57.200Z",
+    "flwRef": "flw_mock_1790265537200",
+    "paidAt": "2026-09-24T15:58:57.200Z"
+  },
+  {
     "id": "pay_1790251721414",
     "txRef": "TX_MSH-JU4VV_1790251721051",
     "orderCode": "MSH-JU4VV",

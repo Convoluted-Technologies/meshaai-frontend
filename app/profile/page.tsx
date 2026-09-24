@@ -74,9 +74,9 @@ export default function ProfilePage() {
   const formatNGN = (kobo: number) => `₦${(kobo / 100).toLocaleString()}`;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8 pb-12">
+    <div className="max-w-3xl mx-auto space-y-8 pb-12 pt-10">
       <div className="text-center space-y-2">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-black">
           👤 Customer Account Profile
         </h1>
         <p className="text-sm text-slate-400">
@@ -86,7 +86,7 @@ export default function ProfilePage() {
 
       {!customer ? (
         <div className="glass-panel max-w-md mx-auto p-6 space-y-4">
-          <h2 className="text-lg font-bold text-white text-center">
+          <h2 className="text-lg font-bold text-black text-center">
             Sign In with Phone OTP
           </h2>
 

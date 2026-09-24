@@ -1,5 +1,64 @@
 [
   {
+    "id": "ord_1790265529484_i43k6",
+    "code": "MSH-6F55S",
+    "phone": "08012345678",
+    "items": [
+      {
+        "presetId": "preset-1",
+        "presetName": "Bread + 2 Fried Eggs (Classic Gourmet)",
+        "unitPriceKobo": 150000,
+        "qty": 1,
+        "totalKobo": 150000
+      },
+      {
+        "presetId": "preset-2",
+        "presetName": "Bread + 2 Eggs + Seasoned Fish",
+        "unitPriceKobo": 220000,
+        "qty": 4,
+        "totalKobo": 880000
+      }
+    ],
+    "subtotalKobo": 1030000,
+    "deliveryFeeKobo": 50000,
+    "totalKobo": 1080000,
+    "location": {
+      "lat": 6.5244,
+      "lng": 3.3792,
+      "address": "12 Commercial Avenue, Yaba, Lagos",
+      "landmark": "Opposite Domino Pizza",
+      "distanceKm": 0
+    },
+    "note": "Extra hot pepper sauce on the side please",
+    "status": "PAID",
+    "paymentTxRef": "TX_MSH-6F55S_1790265529485",
+    "idempotencyKey": "idem_1790265529259_zyv6w",
+    "deliveryProof": {
+      "code": "5699",
+      "verified": false
+    },
+    "auditTrail": [
+      {
+        "id": "aud_1790265529485",
+        "fromState": "NONE",
+        "toState": "PENDING_PAYMENT",
+        "timestamp": "2026-09-24T15:58:49.485Z",
+        "actor": "GUEST:08012345678",
+        "reason": "Order created"
+      },
+      {
+        "id": "aud_1790265537211_v3u",
+        "fromState": "PENDING_PAYMENT",
+        "toState": "PAID",
+        "timestamp": "2026-09-24T15:58:57.211Z",
+        "actor": "SYSTEM:FLW_WEBHOOK",
+        "reason": "Payment verified successfully"
+      }
+    ],
+    "createdAt": "2026-09-24T15:58:49.485Z",
+    "updatedAt": "2026-09-24T15:58:57.211Z"
+  },
+  {
     "id": "ord_1790251721051_hqo4f",
     "code": "MSH-JU4VV",
     "phone": "08012345678",

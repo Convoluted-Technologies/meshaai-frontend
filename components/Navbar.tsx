@@ -18,7 +18,7 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="sticky top-3 z-40 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full transition-all">
+    <header className="sticky top-3 z-40 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full transition-all animate-nav-entrance">
       <div className="glass-nav rounded-2xl px-5 py-3 flex items-center justify-between shadow-xl shadow-slate-900/5 border border-slate-200/80 backdrop-blur-xl bg-white/90">
         {/* Brand & Logo */}
         <Link href="/" className="flex items-center gap-3 group">
