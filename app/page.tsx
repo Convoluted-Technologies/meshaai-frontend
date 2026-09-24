@@ -391,7 +391,6 @@ export default function CustomerHomePage() {
                         <button
                           onClick={() => {
                             updateQuantity(preset.id, 1);
-                            setIsCartOpen(true);
                           }}
                           disabled={!preset.isAvailable}
                           className="w-8 h-8 rounded-lg btn-crimson font-extrabold flex items-center justify-center text-sm"

@@ -55,12 +55,6 @@ export default function RootLayout({
             >
               🔑 Admin
             </Link>
-            <Link
-              href="/#menu"
-              className="btn-crimson px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center gap-1.5"
-            >
-              Order Now →
-            </Link>
           </div>
         </header>
 
