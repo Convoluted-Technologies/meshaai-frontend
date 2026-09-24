@@ -1,0 +1,53 @@
+[
+  {
+    "id": "ord_1790251721051_hqo4f",
+    "code": "MSH-JU4VV",
+    "phone": "08012345678",
+    "items": [
+      {
+        "presetId": "preset-1",
+        "presetName": "Bread + 2 Fried Eggs (Classic)",
+        "unitPriceKobo": 150000,
+        "qty": 2,
+        "totalKobo": 300000
+      }
+    ],
+    "subtotalKobo": 300000,
+    "deliveryFeeKobo": 50000,
+    "totalKobo": 350000,
+    "location": {
+      "lat": 6.5244,
+      "lng": 3.3792,
+      "address": "12 Commercial Ave, Yaba",
+      "landmark": "Domino",
+      "distanceKm": 0
+    },
+    "status": "PAID",
+    "paymentTxRef": "TX_MSH-JU4VV_1790251721051",
+    "idempotencyKey": "idem_test_1790251721031",
+    "deliveryProof": {
+      "code": "1464",
+      "verified": false
+    },
+    "auditTrail": [
+      {
+        "id": "aud_1790251721051",
+        "fromState": "NONE",
+        "toState": "PENDING_PAYMENT",
+        "timestamp": "2026-09-24T12:08:41.051Z",
+        "actor": "GUEST:08012345678",
+        "reason": "Order created"
+      },
+      {
+        "id": "aud_1790251721749_4x2",
+        "fromState": "PENDING_PAYMENT",
+        "toState": "PAID",
+        "timestamp": "2026-09-24T12:08:41.749Z",
+        "actor": "SYSTEM:FLW_WEBHOOK",
+        "reason": "Payment verified successfully"
+      }
+    ],
+    "createdAt": "2026-09-24T12:08:41.051Z",
+    "updatedAt": "2026-09-24T12:08:41.749Z"
+  }
+]

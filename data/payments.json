@@ -1,0 +1,16 @@
+[
+  {
+    "id": "pay_1790251721414",
+    "txRef": "TX_MSH-JU4VV_1790251721051",
+    "orderCode": "MSH-JU4VV",
+    "amountKobo": 350000,
+    "currency": "NGN",
+    "status": "SUCCESSFUL",
+    "customerPhone": "08012345678",
+    "checkoutUrl": "http://localhost:3000/checkout/mock?tx_ref=TX_MSH-JU4VV_1790251721051&amount=3500&code=MSH-JU4VV",
+    "createdAt": "2026-09-24T12:08:41.414Z",
+    "updatedAt": "2026-09-24T12:08:41.744Z",
+    "flwRef": "flw_mock_1790251721744",
+    "paidAt": "2026-09-24T12:08:41.744Z"
+  }
+]
