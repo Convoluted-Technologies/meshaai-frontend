@@ -232,8 +232,8 @@ export default function CustomerHomePage() {
             className="w-full h-full object-cover object-center scale-105 transition-transform duration-1000"
           />
           {/* Light Vignette Gradient Overlays */}
-          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-white/90" />
-          <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-white/70" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-white/10 to-white/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-white/10" />
         </div>
 
         {/* Hero Content Container */}
@@ -243,7 +243,7 @@ export default function CustomerHomePage() {
               <span>🔥 Sizzle Your Senses</span>
             </div>
 
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-slate-900 leading-[1.1]">
+            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.1]">
               Elevate Your Taste Buds —{' '}
               <span className="bg-gradient-to-r from-red-600 via-amber-600 to-orange-600 bg-clip-text text-transparent">
                 Gourmet Dining At Its Finest.
@@ -325,11 +325,10 @@ export default function CustomerHomePage() {
               return (
                 <div
                   key={preset.id}
-                  className={`glass-panel overflow-hidden transition-all border flex flex-col justify-between ${
-                    qty > 0
-                      ? 'border-red-500/60 ring-2 ring-red-500/20 shadow-xl shadow-red-500/10'
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
+                  className={`glass-panel overflow-hidden transition-all border flex flex-col justify-between ${qty > 0
+                    ? 'border-red-500/60 ring-2 ring-red-500/20 shadow-xl shadow-red-500/10'
+                    : 'border-slate-200 hover:border-slate-300'
+                    }`}
                 >
                   <div>
                     {/* Food Image Container */}
