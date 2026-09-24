@@ -15,8 +15,8 @@ export default function CustomerHomePage() {
 
   return (
     <div className="relative space-y-16 pb-20 bg-white text-slate-900">
-      {/* FULL 100VH HERO SECTION (WHITE THEME OVERLAY WITH USER VIGNETTE & WHITE TEXT) */}
-      <section className="relative w-full h-[calc(100vh-80px)] min-h-[600px] overflow-hidden flex items-center justify-center bg-slate-950">
+      {/* FULL 100VH HERO SECTION (FULL BLEED COVER UNDER FLOATING NAV) */}
+      <section className="relative w-full min-h-screen h-screen -mt-24 pt-24 overflow-hidden flex items-center justify-center bg-slate-950">
         {/* Full Bleed Background Image */}
         <div className="absolute inset-0 z-0">
           <img
@@ -65,7 +65,7 @@ export default function CustomerHomePage() {
             </div>
 
             {/* Appetizing Highlights */}
-            <div className="flex flex-wrap items-center gap-8 pt-8 border-t border-slate-700/80 text-xs sm:text-sm text-white">
+            <div className="flex flex-wrap items-center gap-8 pt-8 border-t border-white text-xs sm:text-sm text-white">
               <div className="flex items-center gap-2 font-bold">
                 <span className="text-red-500 text-lg">🔥</span>
                 <span>Freshly Fried in 5 Mins</span>
@@ -84,7 +84,7 @@ export default function CustomerHomePage() {
       </section>
 
       {/* FULL-WIDTH MENU SECTION */}
-      <div id="menu" className="max-w-7xl mx-auto px-6 lg:px-12 space-y-8 pt-6">
+      <div id="menu" className="max-w-[85%] mx-auto px-6 lg:px-12 space-y-8 pt-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
           <div>
             <h2 className="text-3xl font-black text-slate-900 flex items-center gap-3">
@@ -106,13 +106,13 @@ export default function CustomerHomePage() {
         </div>
 
         {loadingCatalog ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map((n) => (
               <div key={n} className="h-80 glass-panel animate-pulse bg-slate-100 rounded-2xl" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {presets.map((preset) => {
               const qty = cart[preset.id] || 0;
               return (
