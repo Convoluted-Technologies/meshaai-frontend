@@ -16,7 +16,7 @@ export default function CustomerHomePage() {
   return (
     <div className="relative space-y-16 pb-20 bg-white text-slate-900 ">
       {/* FULL 100VH HERO SECTION (FULL BLEED COVER UNDER ABSOLUTE FLOATING NAV) */}
-      <section className="relative w-full min-h-screen pt-10 overflow-hidden flex items-center justify-center bg-slate-950 rounded-b-4xl">
+      <section className="relative w-full min-h-screen sm:pt-10 pt-30 overflow-hidden flex items-center justify-center bg-slate-950 rounded-b-4xl">
         {/* Full Bleed Background Image with Zoom Reveal */}
         <div className="absolute inset-0 z-0">
           <img
