@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PresetMeal, QuoteResponse } from '@/lib/types';
+import Link from 'next/link';
 
 export default function CustomerHomePage() {
   const router = useRouter();
@@ -18,7 +19,7 @@ export default function CustomerHomePage() {
   const [address, setAddress] = useState<string>('12 Commercial Avenue, Yaba, Lagos');
   const [landmark, setLandmark] = useState<string>('Opposite Domino Pizza');
 
-  // Phone & Guest / OTP Auth state
+  // Phone & Identity state
   const [phone, setPhone] = useState<string>('08012345678');
   const [note, setNote] = useState<string>('Extra hot pepper sauce on the side please');
   const [isOtpMode, setIsOtpMode] = useState<boolean>(false);
@@ -43,7 +44,6 @@ export default function CustomerHomePage() {
       const data = await res.json();
       if (data.presets) {
         setPresets(data.presets);
-        // Pre-select preset 1 with qty 1 for quick checkout
         if (data.presets.length > 0) {
           setCart({ [data.presets[0].id]: 1 });
         }
@@ -182,7 +182,6 @@ export default function CustomerHomePage() {
 
       const payData = await payRes.json();
       if (payRes.ok && payData.checkoutUrl) {
-        // Redirect to Flutterwave checkout (or mock checkout screen)
         window.location.href = payData.checkoutUrl;
       } else {
         alert('Order created! Redirecting to tracker...');
@@ -198,76 +197,135 @@ export default function CustomerHomePage() {
   const formatNGN = (kobo: number) => `₦${(kobo / 100).toLocaleString()}`;
 
   return (
-    <div className="space-y-8 pb-12">
-      {/* Banner & Hero */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-950 via-slate-900 to-orange-950 p-6 sm:p-10 border border-amber-500/20 shadow-2xl">
-        <div className="max-w-2xl space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold">
-            <span>🔥 Fast Roadside Delivery in NGN</span>
+    <div className="space-y-12 pb-16">
+      {/* HERO SECTION Inspired by Reference Image */}
+      <section className="relative min-h-[580px] w-full overflow-hidden flex items-center justify-center bg-[#090d16]">
+        {/* Full Bleed Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/images/hero_food.png"
+            alt="Sizzling Gourmet Fried Egg & Toast"
+            className="w-full h-full object-cover object-center scale-105 transition-transform duration-1000"
+          />
+          {/* Deep Dark Vignette Gradient Overlays */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#090d16] via-[#090d16]/70 to-[#090d16]/85" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#090d16] via-transparent to-[#090d16]/60" />
+        </div>
+
+        {/* Hero Content Container */}
+        <div className="relative z-10 max-w-7xl w-full mx-auto px-6 lg:px-12 py-16 flex flex-col justify-center">
+          <div className="max-w-2xl space-y-6">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-600/20 border border-red-500/40 text-red-400 text-xs font-bold uppercase tracking-widest shadow-lg shadow-red-600/20">
+              <span>🔥 Sizzle Your Senses</span>
+            </div>
+
+            <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-[1.15]">
+              Elevate Your Taste Buds —{' '}
+              <span className="bg-gradient-to-r from-red-500 via-amber-400 to-orange-400 bg-clip-text text-transparent">
+                Gourmet Dining At Its Finest.
+              </span>
+            </h1>
+
+            <p className="text-slate-200 text-base sm:text-lg font-medium leading-relaxed drop-shadow">
+              Indulge in expertly fried eggs with diced sweet peppers, melted cheddar & sizzling beef sausages, served piping hot inside soft, pillow-fresh warm bread.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-4 pt-2">
+              <a
+                href="#menu"
+                className="btn-crimson px-8 py-4 rounded-xl font-extrabold text-sm uppercase tracking-wider flex items-center gap-2 text-white"
+              >
+                <span>Order Hot Meal Now</span>
+                <span>→</span>
+              </a>
+
+              <Link
+                href="/track"
+                className="px-6 py-4 rounded-xl bg-slate-900/80 border border-slate-700 hover:border-slate-500 text-slate-200 hover:text-white font-bold text-sm transition-all backdrop-blur-md"
+              >
+                📍 Track Order
+              </Link>
+            </div>
+
+            {/* Appetizing Highlights */}
+            <div className="flex flex-wrap items-center gap-6 pt-6 border-t border-slate-800/80 text-xs text-slate-300">
+              <div className="flex items-center gap-2 font-semibold">
+                <span className="text-red-500 text-base">🔥</span>
+                <span>Freshly Fried in 5 Mins</span>
+              </div>
+              <div className="flex items-center gap-2 font-semibold">
+                <span className="text-amber-400 text-base">🍳</span>
+                <span>Free-Range Eggs & Cheese</span>
+              </div>
+              <div className="flex items-center gap-2 font-semibold">
+                <span className="text-orange-400 text-base">🚚</span>
+                <span>20-Min Doorstep Delivery</span>
+              </div>
+            </div>
           </div>
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
-            Freshly Fried Eggs & Soft Warm Bread
-          </h1>
-          <p className="text-slate-300 text-sm sm:text-base">
-            Pick your meal combo, share your landmark, and pay seamlessly via Flutterwave. Delivered piping hot to your doorstep in minutes.
-          </p>
         </div>
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Catalog Section */}
+      {/* CATALOG & CHECKOUT SECTION */}
+      <div id="menu" className="max-w-7xl mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Preset Meal Cards List */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold flex items-center gap-2 text-slate-100">
-              <span>🍳 Meal Presets</span>
-              <span className="text-xs bg-slate-800 text-amber-400 px-2.5 py-0.5 rounded-full font-mono">
-                {presets.length} active
-              </span>
-            </h2>
+          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div>
+              <h2 className="text-2xl font-extrabold text-white flex items-center gap-2">
+                <span>🍳 Signature Specials</span>
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">
+                Handcrafted bread & egg combo meals made to order.
+              </p>
+            </div>
             <button
               onClick={fetchCatalog}
-              className="text-xs text-slate-400 hover:text-amber-400 transition-colors"
+              className="text-xs text-slate-400 hover:text-red-400 transition-colors font-medium"
             >
-              🔄 Refresh Catalog
+              🔄 Refresh
             </button>
           </div>
 
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[1, 2, 3, 4].map((n) => (
-                <div key={n} className="h-64 glass-panel animate-pulse bg-slate-800/40 rounded-xl" />
+                <div key={n} className="h-72 glass-panel animate-pulse bg-slate-900/60 rounded-xl" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {presets.map((preset) => {
                 const qty = cart[preset.id] || 0;
                 return (
                   <div
                     key={preset.id}
                     className={`glass-panel overflow-hidden transition-all border ${
-                      qty > 0 ? 'border-amber-500/60 ring-2 ring-amber-500/20 shadow-lg shadow-amber-500/10' : 'border-slate-800 hover:border-slate-700'
+                      qty > 0
+                        ? 'border-red-500/60 ring-2 ring-red-500/20 shadow-xl shadow-red-500/10'
+                        : 'border-slate-800 hover:border-slate-700'
                     }`}
                   >
-                    <div className="relative h-40 w-full overflow-hidden bg-slate-900">
+                    {/* Food Image Container */}
+                    <div className="relative h-48 w-full overflow-hidden bg-slate-950">
                       <img
                         src={preset.imageUrl}
                         alt={preset.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      <div className="absolute top-2 right-2 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-700 font-bold text-amber-400 text-sm">
+                      <div className="absolute top-3 right-3 bg-slate-950/90 backdrop-blur-md px-3 py-1 rounded-xl border border-red-500/40 font-black text-amber-400 text-sm shadow-md">
                         {formatNGN(preset.priceKobo)}
                       </div>
                       {!preset.isAvailable && (
-                        <div className="absolute inset-0 bg-slate-950/80 flex items-center justify-center font-bold text-red-400 uppercase tracking-widest text-xs">
+                        <div className="absolute inset-0 bg-slate-950/85 flex items-center justify-center font-extrabold text-red-400 uppercase tracking-widest text-xs">
                           Sold Out
                         </div>
                       )}
                     </div>
 
-                    <div className="p-4 space-y-3">
+                    <div className="p-5 space-y-3">
                       <div>
-                        <h3 className="font-bold text-slate-100 text-base leading-snug">
+                        <h3 className="font-extrabold text-slate-100 text-base leading-snug">
                           {preset.name}
                         </h3>
                         <p className="text-xs text-slate-400 line-clamp-2 mt-1">
@@ -280,7 +338,7 @@ export default function CustomerHomePage() {
                         {preset.components.map((c, i) => (
                           <span
                             key={i}
-                            className="text-[11px] bg-slate-800/80 text-amber-300/90 px-2 py-0.5 rounded border border-slate-700/50"
+                            className="text-[11px] bg-slate-900/90 text-amber-300/90 px-2.5 py-1 rounded-lg border border-slate-800 font-medium"
                           >
                             {c}
                           </span>
@@ -288,23 +346,23 @@ export default function CustomerHomePage() {
                       </div>
 
                       {/* Quantity Controls */}
-                      <div className="pt-2 flex items-center justify-between border-t border-slate-800/60">
-                        <span className="text-xs text-slate-400 font-medium">Quantity</span>
-                        <div className="flex items-center gap-2 bg-slate-900/80 rounded-lg p-1 border border-slate-700/60">
+                      <div className="pt-3 flex items-center justify-between border-t border-slate-800/80">
+                        <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Select Qty</span>
+                        <div className="flex items-center gap-2 bg-slate-950/80 rounded-xl p-1 border border-slate-800">
                           <button
                             onClick={() => updateQuantity(preset.id, -1)}
                             disabled={!preset.isAvailable || qty === 0}
-                            className="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:opacity-30 font-bold flex items-center justify-center text-sm"
+                            className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:opacity-30 font-extrabold flex items-center justify-center text-sm"
                           >
                             -
                           </button>
-                          <span className="w-6 text-center font-mono font-bold text-amber-400 text-sm">
+                          <span className="w-7 text-center font-mono font-bold text-amber-400 text-sm">
                             {qty}
                           </span>
                           <button
                             onClick={() => updateQuantity(preset.id, 1)}
                             disabled={!preset.isAvailable}
-                            className="w-7 h-7 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold flex items-center justify-center text-sm"
+                            className="w-8 h-8 rounded-lg btn-crimson font-extrabold flex items-center justify-center text-sm"
                           >
                             +
                           </button>
@@ -318,17 +376,17 @@ export default function CustomerHomePage() {
           )}
         </div>
 
-        {/* Quote & Checkout Drawer */}
+        {/* Order Quote & Checkout Drawer */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="glass-panel p-6 space-y-6 sticky top-20">
-            <h2 className="text-lg font-bold text-slate-100 flex items-center justify-between">
+          <div className="glass-panel p-6 space-y-6 sticky top-24 border-red-500/20 shadow-2xl">
+            <h2 className="text-lg font-extrabold text-white flex items-center justify-between border-b border-slate-800 pb-3">
               <span>🛒 Order Summary</span>
-              <span className="text-xs text-amber-400 font-mono">Server Quote</span>
+              <span className="text-xs text-red-400 font-mono font-bold uppercase">Server Quote</span>
             </h2>
 
-            {/* Location & Delivery Zone Input */}
-            <div className="space-y-3 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
-              <label className="text-xs font-semibold text-amber-400 uppercase tracking-wider block">
+            {/* Delivery Location & Landmark */}
+            <div className="space-y-3 bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+              <label className="text-xs font-extrabold text-amber-400 uppercase tracking-wider block">
                 📍 Delivery Location & Landmark
               </label>
 
@@ -338,14 +396,14 @@ export default function CustomerHomePage() {
                   placeholder="Street address or Area (e.g. Yaba)"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="w-full text-xs bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500"
+                  className="w-full text-xs bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-red-500"
                 />
                 <input
                   type="text"
                   placeholder="Landmark (e.g. Opposite Domino Pizza)"
                   value={landmark}
                   onChange={(e) => setLandmark(e.target.value)}
-                  className="w-full text-xs bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500"
+                  className="w-full text-xs bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-red-500"
                 />
               </div>
 
@@ -359,7 +417,7 @@ export default function CustomerHomePage() {
                     setLng(3.3792);
                     setAddress('12 Commercial Avenue, Yaba');
                   }}
-                  className="text-amber-400 hover:underline"
+                  className="text-red-400 hover:underline font-semibold"
                 >
                   Yaba (Base)
                 </button>
@@ -370,23 +428,23 @@ export default function CustomerHomePage() {
                     setLng(3.3515);
                     setAddress('Allen Avenue, Ikeja');
                   }}
-                  className="text-amber-400 hover:underline"
+                  className="text-red-400 hover:underline font-semibold"
                 >
                   Ikeja
                 </button>
               </div>
             </div>
 
-            {/* Phone Number & Customer Identity */}
-            <div className="space-y-3 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+            {/* Customer Phone Identity */}
+            <div className="space-y-3 bg-slate-950/60 p-4 rounded-xl border border-slate-800">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-amber-400 uppercase tracking-wider">
-                  📱 Phone Number (Identity)
+                <label className="text-xs font-extrabold text-amber-400 uppercase tracking-wider">
+                  📱 Customer Phone (Identity)
                 </label>
                 <button
                   type="button"
                   onClick={() => setIsOtpMode(!isOtpMode)}
-                  className="text-[11px] text-slate-400 hover:text-amber-400 underline"
+                  className="text-[11px] text-slate-400 hover:text-red-400 underline"
                 >
                   {isOtpMode ? 'Guest Checkout' : 'Login via OTP'}
                 </button>
@@ -397,14 +455,14 @@ export default function CustomerHomePage() {
                 placeholder="08012345678"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full text-sm bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500 font-mono"
+                className="w-full text-sm bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-red-500 font-mono"
               />
 
               {isOtpMode && !otpSent && (
                 <button
                   type="button"
                   onClick={handleSendOTP}
-                  className="w-full py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs font-semibold rounded-lg border border-slate-700"
+                  className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-red-400 text-xs font-bold rounded-lg border border-slate-700"
                 >
                   Send OTP Code
                 </button>
@@ -417,7 +475,7 @@ export default function CustomerHomePage() {
                     placeholder="Enter 6-digit OTP"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    className="w-full text-xs bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 font-mono"
+                    className="w-full text-xs bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 font-mono"
                   />
                   {otpDevHint && (
                     <p className="text-[10px] text-amber-400/80 font-mono">
@@ -432,7 +490,7 @@ export default function CustomerHomePage() {
                 placeholder="Optional delivery note / pepper preference"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                className="w-full text-xs bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-500"
+                className="w-full text-xs bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-red-500"
               />
             </div>
 
@@ -445,13 +503,13 @@ export default function CustomerHomePage() {
 
             {quote && (
               <div className="space-y-3 border-t border-slate-800 pt-4">
-                <div className="space-y-1.5 text-xs text-slate-300">
+                <div className="space-y-2 text-xs text-slate-300">
                   {quote.items.map((item, idx) => (
                     <div key={idx} className="flex justify-between">
                       <span>
                         {item.qty}× {item.presetName}
                       </span>
-                      <span className="font-mono text-slate-200">{formatNGN(item.totalKobo)}</span>
+                      <span className="font-mono text-slate-100 font-bold">{formatNGN(item.totalKobo)}</span>
                     </div>
                   ))}
                 </div>
@@ -468,8 +526,8 @@ export default function CustomerHomePage() {
                 </div>
 
                 <div className="flex items-center justify-between border-t border-slate-700 pt-3">
-                  <span className="font-bold text-slate-100 text-sm">Grand Total</span>
-                  <span className="font-extrabold text-xl text-amber-400 font-mono">
+                  <span className="font-extrabold text-slate-100 text-sm">Grand Total</span>
+                  <span className="font-black text-2xl text-amber-400 font-mono">
                     {formatNGN(quote.grandTotalKobo)}
                   </span>
                 </div>
@@ -480,10 +538,10 @@ export default function CustomerHomePage() {
             <button
               onClick={handleCreateOrderAndPay}
               disabled={isSubmitting || !quote || !!quoteError}
-              className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-extrabold rounded-xl shadow-lg shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-base flex items-center justify-center gap-2"
+              className="btn-crimson w-full py-4 font-black rounded-xl text-base uppercase tracking-wider flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
-                <span>Processing Order...</span>
+                <span>Preparing Checkout...</span>
               ) : (
                 <>
                   <span>💳 Pay {quote ? formatNGN(quote.grandTotalKobo) : ''} via Flutterwave</span>

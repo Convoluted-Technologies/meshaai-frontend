@@ -1,15 +1,15 @@
 [
   {
     "id": "preset-1",
-    "name": "Bread + 2 Fried Eggs (Classic)",
-    "description": "Freshly baked soft bread paired with two golden fried eggs, diced onions, and fresh pepper.",
+    "name": "Bread + 2 Fried Eggs (Classic Gourmet)",
+    "description": "Freshly baked soft warm bread paired with two golden fried eggs, melted cheese, diced onions, and fresh hot pepper dip.",
     "components": [
       "1 Loaf Fresh Warm Bread",
       "2 Fried Eggs with Onions & Peppers",
-      "Hot Pepper Dip"
+      "Melted Cheddar & Hot Pepper Dip"
     ],
     "priceKobo": 150000,
-    "imageUrl": "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=600&auto=format&fit=crop&q=80",
+    "imageUrl": "/images/hero_food.png",
     "isAvailable": true,
     "createdAt": "2026-09-24T10:00:00.000Z",
     "updatedAt": "2026-09-24T10:00:00.000Z"
@@ -17,7 +17,7 @@
   {
     "id": "preset-2",
     "name": "Bread + 2 Eggs + Seasoned Fish",
-    "description": "Rich combination of fluffy bread, two fried eggs, and a crispy seasoned fried fish.",
+    "description": "Rich combination of fluffy warm bread, two fried eggs, and a crispy seasoned fried croaker fish steak.",
     "components": [
       "1 Loaf Fresh Warm Bread",
       "2 Fried Eggs with Vegetables",
@@ -25,7 +25,7 @@
       "Signature Pepper Sauce"
     ],
     "priceKobo": 220000,
-    "imageUrl": "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=600&auto=format&fit=crop&q=80",
+    "imageUrl": "/images/preset_fish.png",
     "isAvailable": true,
     "createdAt": "2026-09-24T10:00:00.000Z",
     "updatedAt": "2026-09-24T10:00:00.000Z"
@@ -33,7 +33,7 @@
   {
     "id": "preset-3",
     "name": "Bread + 2 Eggs + 1 Sausage (Mega Combo)",
-    "description": "The ultimate hunger Buster with warm bread, two fluffy eggs, and a juicy grilled beef sausage.",
+    "description": "The ultimate hunger buster with warm bread, two fluffy eggs, and a juicy sizzled beef sausage.",
     "components": [
       "1 Jumbo Loaf Fresh Bread",
       "2 Omelette Eggs",
@@ -41,7 +41,7 @@
       "Spicy Pepper Sauce"
     ],
     "priceKobo": 250000,
-    "imageUrl": "https://images.unsplash.com/photo-1550547660-d9450f859349?w=600&auto=format&fit=crop&q=80",
+    "imageUrl": "/images/hero_food.png",
     "isAvailable": true,
     "createdAt": "2026-09-24T10:00:00.000Z",
     "updatedAt": "2026-09-24T10:00:00.000Z"
@@ -49,7 +49,7 @@
   {
     "id": "preset-4",
     "name": "Double Bread + 4 Eggs (Feast for Two)",
-    "description": "Designed for sharing: two fresh loaves, four spiced eggs, and two grilled sausages.",
+    "description": "Designed for sharing: two fresh loaves, four spiced eggs, and two grilled beef sausages.",
     "components": [
       "2 Loaves Fresh Warm Bread",
       "4 Fried Eggs with Veggies",
@@ -57,7 +57,7 @@
       "Double Pepper Dip"
     ],
     "priceKobo": 380000,
-    "imageUrl": "https://images.unsplash.com/photo-1509722747041-616f39b57569?w=600&auto=format&fit=crop&q=80",
+    "imageUrl": "/images/preset_fish.png",
     "isAvailable": true,
     "createdAt": "2026-09-24T10:00:00.000Z",
     "updatedAt": "2026-09-24T10:00:00.000Z"

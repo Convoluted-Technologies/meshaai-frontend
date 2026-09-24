@@ -3,8 +3,8 @@ import './globals.css';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Meshaai - Bread & Eggs Quick Meal Service',
-  description: 'Order fresh roadside bread & egg preset meals delivered fast with Flutterwave payment.',
+  title: 'Meshaai - Elevate Your Taste Buds | Gourmet Roadside Bread & Eggs',
+  description: 'Order piping hot roadside bread & egg preset meals delivered fast with Flutterwave payment.',
 };
 
 export default function RootLayout({
@@ -14,65 +14,64 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased min-h-screen flex flex-col bg-slate-950 text-slate-100">
-        {/* Navigation Header */}
-        <header className="sticky top-0 z-50 glass-nav px-4 lg:px-8 py-3.5 flex items-center justify-between">
+      <body className="antialiased min-h-screen flex flex-col bg-[#090d16] text-slate-100">
+        {/* Navigation Header inspired by reference image */}
+        <header className="sticky top-0 z-50 glass-nav px-6 lg:px-12 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-xl shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-red-600 to-amber-500 flex items-center justify-center text-xl shadow-lg shadow-red-600/30 group-hover:scale-105 transition-transform">
               🍳
             </div>
             <div>
-              <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-amber-400 via-orange-400 to-yellow-200 bg-clip-text text-transparent">
-                Meshaai
+              <span className="font-extrabold text-xl tracking-wider text-white uppercase block leading-none">
+                MESHA-HAVEN
               </span>
-              <span className="block text-[10px] text-amber-500/90 uppercase tracking-widest font-semibold">
-                Bread & Eggs Express
+              <span className="text-[10px] text-red-500 font-bold uppercase tracking-widest block mt-0.5">
+                Gourmet Bread & Eggs
               </span>
             </div>
           </Link>
 
-          <nav className="flex items-center gap-2 sm:gap-6 text-sm font-medium">
-            <Link
-              href="/"
-              className="px-3 py-1.5 rounded-lg hover:bg-slate-800/80 text-slate-300 hover:text-amber-400 transition-colors"
-            >
-              🍔 Menu
+          {/* Centered Navigation Items */}
+          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-300">
+            <Link href="/" className="hover:text-red-500 transition-colors">
+              Specials
             </Link>
-            <Link
-              href="/track"
-              className="px-3 py-1.5 rounded-lg hover:bg-slate-800/80 text-slate-300 hover:text-amber-400 transition-colors"
-            >
-              📍 Track Order
+            <Link href="/track" className="hover:text-red-500 transition-colors">
+              Track Order
             </Link>
-            <Link
-              href="/profile"
-              className="px-3 py-1.5 rounded-lg hover:bg-slate-800/80 text-slate-300 hover:text-amber-400 transition-colors"
-            >
-              👤 Profile
+            <Link href="/profile" className="hover:text-red-500 transition-colors">
+              Profile
             </Link>
-            {/* <Link
-              href="/docs"
-              className="hidden md:inline-flex px-3 py-1.5 rounded-lg hover:bg-slate-800/80 text-slate-400 hover:text-slate-200 transition-colors text-xs"
-            >
-              ⚡ API Docs
+            <Link href="/docs" className="hover:text-red-500 transition-colors text-slate-400">
+              API Specs
             </Link>
+          </nav>
+
+          {/* Right CTA Button */}
+          <div className="flex items-center gap-3">
             <Link
               href="/admin"
-              className="px-3.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 hover:border-amber-500/50 text-amber-400 hover:text-amber-300 transition-all shadow-sm font-semibold text-xs flex items-center gap-1.5"
+              className="px-4 py-2 bg-slate-900 border border-slate-700 hover:border-red-500 text-slate-300 hover:text-white rounded-xl text-xs font-bold transition-all"
             >
-              🔑 Admin Studio
-            </Link> */}
-          </nav>
+              🔑 Admin
+            </Link>
+            <Link
+              href="/#menu"
+              className="btn-crimson px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center gap-1.5"
+            >
+              Order Now →
+            </Link>
+          </div>
         </header>
 
-        {/* Main Body */}
-        <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+        {/* Main Content */}
+        <main className="flex-1 w-full mx-auto">
           {children}
         </main>
 
         {/* Footer */}
-        <footer className="border-t border-slate-800 py-6 px-4 text-center text-xs text-slate-500">
-          <p>© 2026 Meshaai Meal Ordering Platform. NGN Kobo Prices • Flutterwave Secured</p>
+        <footer className="border-t border-slate-900 py-8 px-6 text-center text-xs text-slate-500">
+          <p>© 2026 Meshaai Gourmet Bread & Egg Dining. NGN Kobo Prices • Flutterwave Secured</p>
         </footer>
       </body>
     </html>
