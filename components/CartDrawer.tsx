@@ -194,6 +194,23 @@ export default function CartDrawer() {
             </div>
           )}
 
+          {!quote && !quoteError && (
+            <div className="text-center py-10 space-y-3 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+              <span className="text-4xl block animate-bounce">🍳</span>
+              <p className="font-extrabold text-slate-800 text-sm">Your cart is currently empty</p>
+              <p className="text-xs text-slate-500">
+                Explore our Signature Specials Menu and select your favorite bread & egg meal combo!
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsCartOpen(false)}
+                className="mt-2 px-5 py-2.5 bg-white border border-slate-300 hover:border-red-500 text-red-600 font-bold text-xs rounded-xl transition-all shadow-xs"
+              >
+                Explore Specials Menu ↓
+              </button>
+            </div>
+          )}
+
           {quote && (
             <div className="space-y-3 border-t border-slate-200 pt-4">
               <div className="space-y-2 text-xs text-slate-700">

@@ -69,9 +69,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json();
       if (data.presets) {
         setPresets(data.presets);
-        if (data.presets.length > 0 && Object.keys(cart).length === 0) {
-          setCart({ [data.presets[0].id]: 1 });
-        }
       }
     } catch (err) {
       console.error('Failed to load catalog:', err);

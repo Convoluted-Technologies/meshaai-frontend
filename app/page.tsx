@@ -85,9 +85,9 @@ export default function CustomerHomePage() {
       <div id="menu" className="max-w-[85%] mx-auto px-6 lg:px-12 space-y-8 pt-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
           <div>
-            <h2 className="text-3xl font-black text-slate-900 flex flex-row items-center gap-3">
+            <h2 className="text-3xl font-black text-slate-900 flex items-center gap-3">
               <span>🍳 Signature Specials Menu</span>
-              <span className="text-xs bg-slate-100 text-amber-700 border border-slate-200 px-3 py-1 rounded-full font-mono font-bold">
+              <span className="text-xs bg-slate-100 text-amber-700 border border-slate-200 px-3 py-1 rounded-full font-mono font-bold hidden md:block">
                 {presets.length} presets
               </span>
             </h2>

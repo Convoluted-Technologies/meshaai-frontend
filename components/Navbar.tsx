@@ -105,7 +105,7 @@ export default function Navbar() {
               {link.name}
             </Link>
           ))}
-          <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
+          {/* <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
             <Link
               href="/admin"
               onClick={() => setMobileMenuOpen(false)}
@@ -116,7 +116,7 @@ export default function Navbar() {
             <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-full font-bold">
               🟢 Open & Sizzling
             </span>
-          </div>
+          </div> */}
         </div>
       )}
     </header>
