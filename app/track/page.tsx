@@ -92,12 +92,12 @@ function TrackContent() {
   const formatNGN = (kobo: number) => `₦${(kobo / 100).toLocaleString()}`;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8 pb-12">
+    <div className="max-w-3xl mx-auto space-y-8 py-10 px-6">
       <div className="text-center space-y-2">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
           📍 Live Order Tracking
         </h1>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-slate-500">
           Track your bread & egg meal status from grill to your doorstep.
         </p>
       </div>
@@ -109,26 +109,26 @@ function TrackContent() {
           placeholder="Order Code (e.g. MSH-4F7K2)"
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
-          className="flex-1 text-sm bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 uppercase font-mono focus:outline-none focus:border-amber-500"
+          className="flex-1 text-sm bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 uppercase font-mono focus:outline-none focus:border-red-500"
         />
         <input
           type="tel"
           placeholder="Phone Number (e.g. 08012345678)"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
-          className="flex-1 text-sm bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 font-mono focus:outline-none focus:border-amber-500"
+          className="flex-1 text-sm bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 font-mono focus:outline-none focus:border-red-500"
         />
         <button
           type="submit"
           disabled={loading}
-          className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm rounded-xl transition-all shadow-md shadow-amber-500/20"
+          className="btn-crimson px-6 py-2.5 font-bold text-sm rounded-xl transition-all shadow-md"
         >
           {loading ? 'Searching...' : 'Track'}
         </button>
       </form>
 
       {error && (
-        <div className="p-4 bg-red-950/60 border border-red-800 rounded-xl text-red-300 text-sm text-center">
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm text-center font-medium">
           ⚠️ {error}
         </div>
       )}
@@ -137,32 +137,32 @@ function TrackContent() {
       {order && (
         <div className="glass-panel p-6 space-y-8">
           {/* Header Card */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xl font-bold font-mono text-amber-400">
+                <span className="text-xl font-bold font-mono text-red-600">
                   #{order.code}
                 </span>
                 <span
                   className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${
                     order.status === 'DELIVERED'
-                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                       : order.status === 'CANCELLED' || order.status === 'REFUNDED'
-                      ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                      : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                      ? 'bg-red-50 text-red-700 border border-red-200'
+                      : 'bg-amber-50 text-amber-800 border border-amber-200'
                   }`}
                 >
                   {order.status}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Placed on {new Date(order.createdAt).toLocaleString()}
               </p>
             </div>
 
             <div className="text-right">
-              <span className="block text-xs text-slate-400">Total Paid</span>
-              <span className="text-xl font-extrabold text-white font-mono">
+              <span className="block text-xs text-slate-500">Total Paid</span>
+              <span className="text-xl font-extrabold text-slate-900 font-mono">
                 {formatNGN(order.totalKobo)}
               </span>
             </div>
@@ -171,7 +171,7 @@ function TrackContent() {
           {/* Visual Stepper */}
           {!['CANCELLED', 'EXPIRED', 'REFUNDED', 'FAILED_DELIVERY'].includes(order.status) && (
             <div className="space-y-4">
-              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 Order Lifecycle
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
@@ -185,10 +185,10 @@ function TrackContent() {
                       key={step.status}
                       className={`p-3 rounded-xl border text-center transition-all ${
                         isCurrent
-                          ? 'bg-amber-500/20 border-amber-500 text-amber-300 shadow-md shadow-amber-500/10 ring-2 ring-amber-500/30'
+                          ? 'bg-red-50 border-red-500 text-red-700 shadow-sm ring-2 ring-red-500/20'
                           : isCompleted
-                          ? 'bg-slate-800/80 border-slate-700 text-slate-200'
-                          : 'bg-slate-900/40 border-slate-800/60 text-slate-500 opacity-50'
+                          ? 'bg-slate-100 border-slate-200 text-slate-800'
+                          : 'bg-slate-50 border-slate-200 text-slate-400 opacity-60'
                       }`}
                     >
                       <div className="text-lg">{step.icon}</div>
@@ -202,18 +202,18 @@ function TrackContent() {
 
           {/* Rider & Proof of Delivery Card */}
           {order.rider && (
-            <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center justify-between">
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
               <div>
-                <span className="text-xs text-slate-400 block">Assigned Dispatch Rider</span>
-                <span className="font-bold text-slate-100 text-sm">{order.rider.name}</span>
-                <span className="block text-xs text-amber-400 font-mono">{order.rider.phone}</span>
+                <span className="text-xs text-slate-500 block">Assigned Dispatch Rider</span>
+                <span className="font-bold text-slate-900 text-sm">{order.rider.name}</span>
+                <span className="block text-xs text-red-600 font-mono font-semibold">{order.rider.phone}</span>
               </div>
               {order.deliveryProof && (
-                <div className="text-right bg-amber-500/10 border border-amber-500/30 px-3 py-2 rounded-lg">
-                  <span className="text-[10px] text-amber-400 uppercase block font-semibold">
+                <div className="text-right bg-amber-50 border border-amber-200 px-3 py-2 rounded-lg">
+                  <span className="text-[10px] text-amber-800 uppercase block font-semibold">
                     Delivery OTP Code
                   </span>
-                  <span className="font-mono font-extrabold text-amber-300 text-lg">
+                  <span className="font-mono font-extrabold text-amber-700 text-lg">
                     {order.deliveryProof.code}
                   </span>
                 </div>
@@ -224,59 +224,40 @@ function TrackContent() {
           {/* Items List & Address */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 Meal Items
               </h4>
-              <div className="space-y-1.5 text-xs text-slate-300 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+              <div className="space-y-1.5 text-xs text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200">
                 {order.items.map((i, idx) => (
                   <div key={idx} className="flex justify-between">
                     <span>
                       {i.qty}× {i.presetName}
                     </span>
-                    <span className="font-mono text-slate-200">{formatNGN(i.totalKobo)}</span>
+                    <span className="font-mono text-slate-900 font-semibold">{formatNGN(i.totalKobo)}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             <div className="space-y-2">
-              <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 Delivery Address
               </h4>
-              <div className="text-xs text-slate-300 bg-slate-900/60 p-3 rounded-xl border border-slate-800 space-y-1">
-                <p className="font-semibold text-slate-200">{order.location.address}</p>
-                <p className="text-slate-400">Landmark: {order.location.landmark}</p>
+              <div className="text-xs text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
+                <p className="font-semibold text-slate-900">{order.location.address}</p>
+                <p className="text-slate-500">Landmark: {order.location.landmark}</p>
                 <p className="text-slate-500">Phone: {order.phone}</p>
               </div>
             </div>
           </div>
 
-          {/* Audit Trail */}
-          <div className="space-y-2 pt-4 border-t border-slate-800">
-            <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              State Audit History
-            </h4>
-            <div className="space-y-1.5 text-xs">
-              {order.auditTrail.map((audit) => (
-                <div key={audit.id} className="flex items-center justify-between text-slate-400 bg-slate-900/40 p-2 rounded-lg">
-                  <span>
-                    <span className="font-semibold text-slate-200">{audit.toState}</span> ({audit.reason})
-                  </span>
-                  <span className="text-[10px] font-mono text-slate-500">
-                    {new Date(audit.timestamp).toLocaleTimeString()}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* Self-service Cancellation Action */}
           {['PENDING_PAYMENT', 'PAID', 'CONFIRMED'].includes(order.status) && (
-            <div className="pt-4 border-t border-slate-800 flex justify-end">
+            <div className="pt-4 border-t border-slate-200 flex justify-end">
               <button
                 onClick={handleCancelOrder}
                 disabled={cancelling}
-                className="px-4 py-2 bg-red-950/80 hover:bg-red-900 border border-red-800 text-red-300 font-semibold text-xs rounded-xl transition-all"
+                className="px-4 py-2 bg-red-50 hover:bg-red-100 border border-red-300 text-red-700 font-semibold text-xs rounded-xl transition-all"
               >
                 {cancelling ? 'Cancelling...' : '🚫 Cancel Order & Request Auto Refund'}
               </button>
@@ -290,7 +271,7 @@ function TrackContent() {
 
 export default function TrackPage() {
   return (
-    <Suspense fallback={<div className="text-center py-12 text-slate-400">Loading Order Tracker...</div>}>
+    <Suspense fallback={<div className="text-center py-12 text-slate-500">Loading Order Tracker...</div>}>
       <TrackContent />
     </Suspense>
   );
