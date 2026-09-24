@@ -16,7 +16,7 @@ export default function CustomerHomePage() {
   return (
     <div className="relative space-y-16 pb-20 bg-white text-slate-900 ">
       {/* FULL 100VH HERO SECTION (FULL BLEED COVER UNDER ABSOLUTE FLOATING NAV) */}
-      <section className="relative w-full min-h-screen h-screen pt-28 overflow-hidden flex items-center justify-center bg-slate-950 rounded-b-4xl">
+      <section className="relative w-full min-h-screen pt-10 overflow-hidden flex items-center justify-center bg-slate-950 rounded-b-4xl">
         {/* Full Bleed Background Image with Zoom Reveal */}
         <div className="absolute inset-0 z-0">
           <img
@@ -85,7 +85,7 @@ export default function CustomerHomePage() {
       <div id="menu" className="max-w-[85%] mx-auto px-6 lg:px-12 space-y-8 pt-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
           <div>
-            <h2 className="text-3xl font-black text-slate-900 flex items-center gap-3">
+            <h2 className="text-3xl font-black text-slate-900 flex flex-row items-center gap-3">
               <span>🍳 Signature Specials Menu</span>
               <span className="text-xs bg-slate-100 text-amber-700 border border-slate-200 px-3 py-1 rounded-full font-mono font-bold">
                 {presets.length} presets

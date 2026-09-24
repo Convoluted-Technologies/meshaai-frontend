@@ -22,8 +22,8 @@ export default function RootLayout({
           {/* Custom Interactive Food Particle Cursor */}
           <FoodCursor />
 
-          {/* Floating Gourmet Navigation Bar - Absolute Top Overlay */}
-          <div className="absolute top-4 inset-x-0 z-40 pointer-events-auto">
+          {/* Floating Gourmet Navigation Bar - Fixed Top Overlay */}
+          <div className="fixed top-4 inset-x-0 z-50 pointer-events-auto">
             <Navbar />
           </div>
 
