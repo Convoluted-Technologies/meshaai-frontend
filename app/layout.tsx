@@ -17,13 +17,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased min-h-screen flex flex-col bg-white text-slate-900 selection:bg-red-500 selection:text-white">
+      <body className="antialiased min-h-screen flex flex-col bg-white text-slate-900 selection:bg-red-500 selection:text-white relative">
         <CartProvider>
           {/* Custom Interactive Food Particle Cursor */}
           <FoodCursor />
 
-          {/* Floating Gourmet Navigation Bar */}
-          <Navbar />
+          {/* Floating Gourmet Navigation Bar - Absolute Top Overlay */}
+          <div className="absolute top-4 inset-x-0 z-40 pointer-events-auto">
+            <Navbar />
+          </div>
 
           {/* Main Page Content */}
           <main className="flex-1 w-full mx-auto">

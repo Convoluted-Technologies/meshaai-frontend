@@ -14,9 +14,9 @@ export default function CustomerHomePage() {
   } = useCart();
 
   return (
-    <div className="relative space-y-16 bg-white text-slate-900 ">
-      {/* FULL 100VH HERO SECTION (FULL BLEED COVER UNDER FLOATING NAV) */}
-      <section className="relative w-full min-h-screen h-screen -mt-10 pt-24 overflow-hidden flex items-center justify-center bg-slate-950 rounded-4xl">
+    <div className="relative space-y-16 pb-20 bg-white text-slate-900 ">
+      {/* FULL 100VH HERO SECTION (FULL BLEED COVER UNDER ABSOLUTE FLOATING NAV) */}
+      <section className="relative w-full min-h-screen h-screen pt-28 overflow-hidden flex items-center justify-center bg-slate-950 rounded-b-4xl">
         {/* Full Bleed Background Image with Zoom Reveal */}
         <div className="absolute inset-0 z-0">
           <img
@@ -32,15 +32,13 @@ export default function CustomerHomePage() {
         {/* Hero Content Container with Staggered Entrance Animations */}
         <div className="relative z-10 max-w-[85%] w-full mx-auto px-6 lg:px-12 flex flex-col justify-center">
           <div className="max-w-3xl space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-600/30 border border-red-500/40 text-red-300 text-xs font-extrabold uppercase tracking-widest shadow-lg shadow-red-600/20 backdrop-blur-md animate-hero-entrance delay-100">
-              <span>🔥 Sizzle Your Senses</span>
-            </div>
+
 
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.1] animate-hero-entrance delay-200">
-              Elevate Your Taste Buds —{' '}
-              <span className="bg-gradient-to-r from-red-500 via-amber-400 to-orange-400 bg-clip-text text-transparent">
+              Elevate Your Taste Buds.
+              {/* <span className="bg-gradient-to-r from-red-500 via-amber-400 to-orange-400 bg-clip-text text-transparent">
                 Gourmet Dining At Its Finest.
-              </span>
+              </span> */}
             </h1>
 
             <p className="text-white text-base sm:text-xl font-medium leading-relaxed max-w-2xl drop-shadow-md animate-hero-entrance delay-300">

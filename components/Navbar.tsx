@@ -14,7 +14,7 @@ export default function Navbar() {
     { name: 'Specials Menu', href: '/#menu' },
     { name: 'Track Live Order', href: '/track' },
     { name: 'Profile', href: '/profile' },
-    { name: 'API Specs', href: '/docs' },
+    // { name: 'API Specs', href: '/docs' },
   ];
 
   return (
@@ -24,25 +24,14 @@ export default function Navbar() {
         <Link href="/" className="flex items-center gap-3 group">
           <div className="relative w-10 h-10 rounded-xl bg-gradient-to-tr from-red-600 via-amber-500 to-orange-500 flex items-center justify-center text-xl shadow-md shadow-red-600/30 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
             🍳
-            <span className="absolute -top-1 -right-1 flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-            </span>
           </div>
 
           <div>
             <div className="flex items-center gap-2">
               <span className="font-black text-lg tracking-wider text-slate-900 uppercase block leading-none group-hover:text-red-600 transition-colors">
-                MESHA-HAVEN
-              </span>
-              <span className="hidden sm:inline-flex items-center gap-1 text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-bold">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Open & Sizzling
+                MESHAAI
               </span>
             </div>
-            <span className="text-[10px] text-red-600 font-extrabold uppercase tracking-widest block mt-0.5">
-              Gourmet Bread & Eggs
-            </span>
           </div>
         </Link>
 
@@ -54,11 +43,10 @@ export default function Navbar() {
               <Link
                 key={link.name}
                 href={link.href}
-                className={`px-4 py-1.5 rounded-lg text-xs font-extrabold transition-all duration-200 ${
-                  isActive
-                    ? 'bg-white text-red-600 shadow-xs border border-slate-200'
-                    : 'text-slate-600 hover:text-red-600 hover:bg-white/60'
-                }`}
+                className={`px-4 py-1.5 rounded-lg text-xs font-extrabold transition-all duration-200 ${isActive
+                  ? 'bg-white text-red-600 shadow-xs border border-slate-200'
+                  : 'text-slate-600 hover:text-red-600 hover:bg-white/60'
+                  }`}
               >
                 {link.name}
               </Link>
@@ -68,13 +56,13 @@ export default function Navbar() {
 
         {/* Right Action Center */}
         <div className="flex items-center gap-3">
-          <Link
+          {/* <Link
             href="/admin"
             className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 border border-slate-200 hover:border-red-400 text-slate-700 hover:text-red-600 rounded-xl text-xs font-bold transition-all hover:scale-105"
           >
             <span>🔑</span>
             <span>Admin</span>
-          </Link>
+          </Link> */}
 
           {/* Dynamic Cart Trigger */}
           <button
