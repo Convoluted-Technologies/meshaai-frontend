@@ -63,7 +63,7 @@ export default function CustomerHomePage() {
             </div>
 
             {/* Appetizing Highlights */}
-            <div className="flex flex-wrap items-center gap-8 pt-8 border-t border-white/40 text-xs sm:text-sm text-white animate-hero-entrance delay-500">
+            <div className="flex flex-wrap items-center sm:gap-8 gap-4 pt-8 border-t border-white/40 text-xs sm:text-sm text-white animate-hero-entrance delay-500">
               <div className="flex items-center gap-2 font-bold">
                 <span className="text-red-500 text-lg">🔥</span>
                 <span>Freshly Fried in 5 Mins</span>
