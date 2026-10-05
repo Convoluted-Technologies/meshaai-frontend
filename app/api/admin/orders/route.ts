@@ -1,33 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrdersFromStore } from '@/lib/db/store';
-import { checkAndExpireUnpaidOrders } from '@/lib/payments';
+import { backendFetch, APIError } from '@/lib/api/backendClient';
 
 export async function GET(req: NextRequest) {
-  // Trigger unpaid order expiry check on access
-  checkAndExpireUnpaidOrders();
+  try {
+    const { searchParams } = new URL(req.url);
+    const status = searchParams.get('status') || '';
+    const queryStr = status ? `?status=${encodeURIComponent(status)}` : '';
 
-  const { searchParams } = new URL(req.url);
-  const status = searchParams.get('status');
-  const search = searchParams.get('search')?.toLowerCase();
+    const data = await backendFetch(`/api/v1/admin/orders${queryStr}`, {
+      method: 'GET',
+    });
 
-  let orders = getOrdersFromStore();
-
-  if (status) {
-    orders = orders.filter((o) => o.status === status);
+    return NextResponse.json({
+      orders: data.orders || data.content || data || [],
+    });
+  } catch (err: any) {
+    if (err instanceof APIError) {
+      return NextResponse.json(err.problem, { status: err.status });
+    }
+    return NextResponse.json({ orders: [] });
   }
-
-  if (search) {
-    orders = orders.filter(
-      (o) =>
-        o.code.toLowerCase().includes(search) ||
-        o.phone.includes(search) ||
-        (o.location.address && o.location.address.toLowerCase().includes(search))
-    );
-  }
-
-  return NextResponse.json({
-    success: true,
-    orders,
-    count: orders.length,
-  });
 }

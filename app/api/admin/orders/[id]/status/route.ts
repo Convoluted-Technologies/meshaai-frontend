@@ -1,49 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { transitionOrderStatus } from '@/lib/orders';
-import { createProblemDetails } from '@/lib/utils/errors';
-import { broadcastAdminEvent } from '@/lib/events/sse';
-import { notifyCustomerOrderEvent } from '@/lib/notifications';
+import { backendFetch, APIError } from '@/lib/api/backendClient';
 
-export async function PATCH(
+export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
     const body = await req.json();
-    const { status, actor = 'ADMIN:OPS', reason = 'Admin status update' } = body;
+    const { status, reason } = body;
 
-    if (!status) {
-      return createProblemDetails(
-        400,
-        'Missing Target Status',
-        'Target order status is required.',
-        'https://meshaai.com/errors/missing-status',
-        `/api/admin/orders/${id}/status`
-      );
-    }
-
-    const updatedOrder = transitionOrderStatus(id, status, actor, reason);
-
-    // Notify customer on key events
-    if (['OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'].includes(status)) {
-      await notifyCustomerOrderEvent(updatedOrder, status as any);
-    }
-
-    broadcastAdminEvent('ORDER_UPDATED', { order: updatedOrder });
-
-    return NextResponse.json({
-      success: true,
-      message: `Order status updated to ${status}`,
-      order: updatedOrder,
+    const data = await backendFetch(`/api/v1/admin/orders/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status, reason }),
     });
+
+    return NextResponse.json({ order: data.order || data });
   } catch (err: any) {
-    return createProblemDetails(
-      400,
-      'Status Transition Failed',
-      err.message || 'Unable to update order status',
-      'https://meshaai.com/errors/status-transition-failed',
-      `/api/admin/orders/status`
+    if (err instanceof APIError) {
+      return NextResponse.json(err.problem, { status: err.status });
+    }
+    return NextResponse.json(
+      { title: 'Update Failed', detail: err.message, status: 400 },
+      { status: 400 }
     );
   }
 }

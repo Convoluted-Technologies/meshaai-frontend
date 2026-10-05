@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useCart } from '@/context/CartContext';
+import { requestPhoneOtp, verifyPhoneOtp } from '@/lib/api/auth';
+import { APIError } from '@/lib/api/backendClient';
 
 export default function CartDrawer() {
   const {
@@ -23,33 +25,79 @@ export default function CartDrawer() {
     setNote,
     handleCreateOrderAndPay,
     isSubmitting,
-    formatNGN,
+    selectedCurrency,
+    formatPrice,
   } = useCart();
 
   const [isOtpMode, setIsOtpMode] = useState<boolean>(false);
   const [otp, setOtp] = useState<string>('');
   const [otpSent, setOtpSent] = useState<boolean>(false);
+  const [otpLoading, setOtpLoading] = useState<boolean>(false);
   const [otpDevHint, setOtpDevHint] = useState<string>('');
+  const [authSuccessMsg, setAuthSuccessMsg] = useState<string>('');
+  const [authErrorMsg, setAuthErrorMsg] = useState<string>('');
 
   if (!isCartOpen) return null;
 
   async function handleSendOTP() {
-    if (!phone) return alert('Please enter phone number');
+    if (!phone) {
+      setAuthErrorMsg('Please enter a valid phone number including country code.');
+      return;
+    }
+    setOtpLoading(true);
+    setAuthErrorMsg('');
+    setAuthSuccessMsg('');
     try {
-      const res = await fetch('/api/auth/otp/request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setOtpSent(true);
-        if (data.devOtp) setOtpDevHint(data.devOtp);
+      const res = await requestPhoneOtp(phone);
+      setOtpSent(true);
+      setAuthSuccessMsg('Verification code dispatched successfully.');
+      if (res.devOtp) setOtpDevHint(res.devOtp);
+    } catch (err: any) {
+      if (err instanceof APIError && err.code) {
+        if (err.code === 'INVALID_PHONE_NUMBER') {
+          setAuthErrorMsg('Please enter a valid phone number including country code.');
+        } else if (err.code === 'RATE_LIMIT_EXCEEDED') {
+          setAuthErrorMsg('Too many requests. Please wait a moment before trying again.');
+        } else if (err.code === 'CUSTOMER_BLOCKED') {
+          setAuthErrorMsg('Your account has been restricted. Please contact Meshaai support.');
+        } else {
+          setAuthErrorMsg(err.message || 'Failed to dispatch verification code.');
+        }
       } else {
-        alert(data.detail || 'Failed to send OTP');
+        setAuthErrorMsg('Unable to send SMS at this moment. Please try again later.');
       }
-    } catch (err) {
-      alert('Network error sending OTP');
+    } finally {
+      setOtpLoading(false);
+    }
+  }
+
+  async function handleVerifyOTP() {
+    if (!otp || otp.length < 4) {
+      setAuthErrorMsg('Please enter the 6-digit verification code.');
+      return;
+    }
+    setOtpLoading(true);
+    setAuthErrorMsg('');
+    try {
+      const data = await verifyPhoneOtp(phone, otp);
+      setAuthSuccessMsg('Phone verified & authenticated!');
+      setIsOtpMode(false);
+    } catch (err: any) {
+      if (err instanceof APIError && err.code) {
+        if (err.code === 'INVALID_OTP') {
+          setAuthErrorMsg('Incorrect verification code. Please check and try again.');
+        } else if (err.code === 'OTP_EXPIRED') {
+          setAuthErrorMsg('Verification code has expired. Please request a new code.');
+        } else if (err.code === 'OTP_LOCKED') {
+          setAuthErrorMsg('Too many failed attempts. Account temporarily locked for 15 minutes.');
+        } else {
+          setAuthErrorMsg(err.message || 'Invalid verification code.');
+        }
+      } else {
+        setAuthErrorMsg('Verification failed. Please try again.');
+      }
+    } finally {
+      setOtpLoading(false);
     }
   }
 
@@ -86,49 +134,51 @@ export default function CartDrawer() {
             <div className="space-y-2">
               <input
                 type="text"
-                placeholder="Street address or Area (e.g. Yaba)"
+                placeholder="Street address or Area (e.g. Plot 124 Wuse 2)"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 className="w-full text-xs bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-red-500"
               />
               <input
                 type="text"
-                placeholder="Landmark (e.g. Opposite Domino Pizza)"
+                placeholder="Landmark (e.g. Opposite KFC Wuse 2)"
                 value={landmark}
                 onChange={(e) => setLandmark(e.target.value)}
                 className="w-full text-xs bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-red-500"
               />
             </div>
 
-            {/* Preset Quick Location Buttons */}
+            {/* Quick Preset Location Coordinates */}
             <div className="flex gap-2 text-[11px] pt-1">
               <span className="text-slate-500">Quick zones:</span>
               <button
                 type="button"
                 onClick={() => {
-                  setLat(6.5244);
-                  setLng(3.3792);
-                  setAddress('12 Commercial Avenue, Yaba');
+                  setLat(9.0778);
+                  setLng(7.4819);
+                  setAddress('Plot 124 Aminu Kano Crescent, Wuse 2, Abuja');
+                  setLandmark('Opposite KFC Wuse 2');
                 }}
                 className="text-red-600 hover:underline font-semibold"
               >
-                Yaba (Base)
+                Abuja Wuse 2
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  setLat(6.6018);
-                  setLng(3.3515);
-                  setAddress('Allen Avenue, Ikeja');
+                  setLat(6.5244);
+                  setLng(3.3792);
+                  setAddress('12 Commercial Avenue, Yaba, Lagos');
+                  setLandmark('Opposite Domino Pizza');
                 }}
                 className="text-red-600 hover:underline font-semibold"
               >
-                Ikeja
+                Lagos Yaba
               </button>
             </div>
           </div>
 
-          {/* Customer Phone Identity */}
+          {/* Customer Phone Identity & Passwordless OTP */}
           <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
             <div className="flex items-center justify-between">
               <label className="text-xs font-extrabold text-amber-700 uppercase tracking-wider">
@@ -136,28 +186,45 @@ export default function CartDrawer() {
               </label>
               <button
                 type="button"
-                onClick={() => setIsOtpMode(!isOtpMode)}
+                onClick={() => {
+                  setIsOtpMode(!isOtpMode);
+                  setAuthErrorMsg('');
+                  setAuthSuccessMsg('');
+                }}
                 className="text-[11px] text-slate-500 hover:text-red-600 underline font-medium"
               >
-                {isOtpMode ? 'Guest Checkout' : 'Login via OTP'}
+                {isOtpMode ? 'Standard Mode' : 'Verify SMS OTP'}
               </button>
             </div>
 
             <input
               type="tel"
-              placeholder="08012345678"
+              placeholder="+2348039276495"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               className="w-full text-sm bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-red-500 font-mono"
             />
 
+            {authErrorMsg && (
+              <p className="text-xs text-red-600 font-semibold bg-red-50 p-2 rounded-lg border border-red-200">
+                ⚠️ {authErrorMsg}
+              </p>
+            )}
+
+            {authSuccessMsg && (
+              <p className="text-xs text-emerald-700 font-semibold bg-emerald-50 p-2 rounded-lg border border-emerald-200">
+                ✅ {authSuccessMsg}
+              </p>
+            )}
+
             {isOtpMode && !otpSent && (
               <button
                 type="button"
                 onClick={handleSendOTP}
-                className="w-full py-2 bg-white hover:bg-slate-100 text-red-600 text-xs font-bold rounded-lg border border-slate-300"
+                disabled={otpLoading}
+                className="w-full py-2 bg-white hover:bg-slate-100 text-red-600 text-xs font-bold rounded-lg border border-slate-300 shadow-xs"
               >
-                Send OTP Code
+                {otpLoading ? 'Sending SMS Code...' : 'Send 6-Digit OTP SMS'}
               </button>
             )}
 
@@ -167,14 +234,39 @@ export default function CartDrawer() {
                   type="text"
                   placeholder="Enter 6-digit OTP"
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  className="w-full text-xs bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 font-mono"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setOtp(val);
+                    if (val.length === 6) {
+                      setTimeout(handleVerifyOTP, 100);
+                    }
+                  }}
+                  className="w-full text-xs bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 font-mono text-center tracking-widest text-base font-bold"
+                  maxLength={6}
                 />
                 {otpDevHint && (
-                  <p className="text-[10px] text-amber-600 font-mono">
-                    Dev test code: {otpDevHint} (or 123456)
+                  <p className="text-[10px] text-amber-600 font-mono text-center">
+                    Dev hint code: {otpDevHint}
                   </p>
                 )}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleVerifyOTP}
+                    disabled={otpLoading}
+                    className="flex-1 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold rounded-lg"
+                  >
+                    {otpLoading ? 'Verifying...' : 'Verify OTP Code'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSendOTP}
+                    disabled={otpLoading}
+                    className="px-3 py-2 bg-white text-slate-700 text-xs font-bold rounded-lg border border-slate-300"
+                  >
+                    Resend
+                  </button>
+                </div>
               </div>
             )}
 
@@ -219,7 +311,9 @@ export default function CartDrawer() {
                     <span>
                       {item.qty}× {item.presetName}
                     </span>
-                    <span className="font-mono text-slate-900 font-bold">{formatNGN(item.totalKobo)}</span>
+                    <span className="font-mono text-slate-900 font-bold">
+                      {formatPrice(item.totalKobo, selectedCurrency)}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -227,18 +321,18 @@ export default function CartDrawer() {
               <div className="space-y-1.5 text-xs border-t border-slate-100 pt-2 text-slate-500">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span className="font-mono">{formatNGN(quote.subtotalKobo)}</span>
+                  <span className="font-mono">{formatPrice(quote.subtotalKobo, selectedCurrency)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Delivery Fee ({quote.deliveryDistanceKm} km)</span>
-                  <span className="font-mono">{formatNGN(quote.deliveryFeeKobo)}</span>
+                  <span className="font-mono">{formatPrice(quote.deliveryFeeKobo, selectedCurrency)}</span>
                 </div>
               </div>
 
               <div className="flex items-center justify-between border-t border-slate-200 pt-3">
                 <span className="font-extrabold text-slate-900 text-sm">Grand Total</span>
                 <span className="font-black text-2xl text-amber-600 font-mono">
-                  {formatNGN(quote.grandTotalKobo)}
+                  {formatPrice(quote.grandTotalKobo, selectedCurrency)}
                 </span>
               </div>
             </div>
@@ -253,10 +347,10 @@ export default function CartDrawer() {
             className="btn-crimson w-full py-4 font-black rounded-xl text-base uppercase tracking-wider flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-red-600/30"
           >
             {isSubmitting ? (
-              <span>Preparing Checkout...</span>
+              <span>Preparing Order...</span>
             ) : (
               <>
-                <span>💳 Pay {quote ? formatNGN(quote.grandTotalKobo) : ''} via Flutterwave</span>
+                <span>💳 Pay {quote ? formatPrice(quote.grandTotalKobo, selectedCurrency) : ''} via Flutterwave</span>
               </>
             )}
           </button>

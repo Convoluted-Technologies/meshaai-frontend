@@ -5,16 +5,33 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 
+const CURRENCIES = [
+  { code: 'NGN', label: '🇳🇬 NGN (₦)' },
+  { code: 'USD', label: '🇺🇸 USD ($)' },
+  { code: 'GBP', label: '🇬🇧 GBP (£)' },
+  { code: 'EUR', label: '🇪🇺 EUR (€)' },
+  { code: 'CAD', label: '🇨🇦 CAD (C$)' },
+  { code: 'GHS', label: '🇬🇭 GHS (GH₵)' },
+  { code: 'KES', label: '🇰🇪 KES (KSh)' },
+];
+
 export default function Navbar() {
   const pathname = usePathname();
-  const { totalCartCount, quote, setIsCartOpen, formatNGN } = useCart();
+  const {
+    totalCartCount,
+    quote,
+    setIsCartOpen,
+    selectedCurrency,
+    setSelectedCurrency,
+    formatPrice,
+  } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
     { name: 'Specials Menu', href: '/#menu' },
     { name: 'Track Live Order', href: '/track' },
     { name: 'Profile', href: '/profile' },
-    // { name: 'API Specs', href: '/docs' },
+    // { name: 'Admin Studio', href: '/admin' },
   ];
 
   return (
@@ -44,8 +61,8 @@ export default function Navbar() {
                 key={link.name}
                 href={link.href}
                 className={`px-4 py-1.5 rounded-lg text-xs font-extrabold transition-all duration-200 ${isActive
-                  ? 'bg-white text-red-600 shadow-xs border border-slate-200'
-                  : 'text-slate-600 hover:text-red-600 hover:bg-white/60'
+                    ? 'bg-white text-red-600 shadow-xs border border-slate-200'
+                    : 'text-slate-600 hover:text-red-600 hover:bg-white/60'
                   }`}
               >
                 {link.name}
@@ -56,13 +73,21 @@ export default function Navbar() {
 
         {/* Right Action Center */}
         <div className="flex items-center gap-3">
-          {/* <Link
-            href="/admin"
-            className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 border border-slate-200 hover:border-red-400 text-slate-700 hover:text-red-600 rounded-xl text-xs font-bold transition-all hover:scale-105"
-          >
-            <span>🔑</span>
-            <span>Admin</span>
-          </Link> */}
+          {/* Currency Switcher Dropdown */}
+          <div className="relative">
+            <select
+              value={selectedCurrency}
+              onChange={(e) => setSelectedCurrency(e.target.value)}
+              className="bg-slate-100 border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-500 shadow-xs"
+              aria-label="Select currency"
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {/* Dynamic Cart Trigger */}
           <button
@@ -77,7 +102,7 @@ export default function Navbar() {
             )}
             {quote && (
               <span className="font-mono text-amber-200 border-l border-red-400/50 pl-2 hidden xs:inline">
-                {formatNGN(quote.grandTotalKobo)}
+                {formatPrice(quote.grandTotalKobo)}
               </span>
             )}
           </button>
@@ -105,18 +130,6 @@ export default function Navbar() {
               {link.name}
             </Link>
           ))}
-          {/* <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
-            <Link
-              href="/admin"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-xs font-bold text-slate-600 hover:text-red-600 flex items-center gap-1"
-            >
-              🔑 Admin Console
-            </Link>
-            <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-full font-bold">
-              🟢 Open & Sizzling
-            </span>
-          </div> */}
         </div>
       )}
     </header>

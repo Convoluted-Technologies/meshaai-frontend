@@ -9,12 +9,34 @@ export default function CustomerHomePage() {
     cart,
     updateQuantity,
     setIsCartOpen,
-    fetchCatalog,
-    formatNGN,
+    selectedCurrency,
+    formatPrice,
+    deliveryCheck,
+    checkingDelivery,
+    setLat,
+    setLng,
+    lat,
+    lng,
   } = useCart();
 
+  const handleUseMyLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setLat(pos.coords.latitude);
+          setLng(pos.coords.longitude);
+        },
+        (err) => {
+          alert('Unable to retrieve location. Using default coordinates.');
+        }
+      );
+    } else {
+      alert('Geolocation is not supported by your browser.');
+    }
+  };
+
   return (
-    <div className="relative space-y-16 pb-20 bg-white text-slate-900 ">
+    <div className="relative space-y-16 pb-20 bg-white text-slate-900">
       {/* FULL 100VH HERO SECTION (FULL BLEED COVER UNDER ABSOLUTE FLOATING NAV) */}
       <section className="relative w-full min-h-screen sm:pt-10 pt-30 overflow-hidden flex items-center justify-center bg-slate-950 rounded-b-4xl">
         {/* Full Bleed Background Image with Zoom Reveal */}
@@ -29,16 +51,41 @@ export default function CustomerHomePage() {
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
         </div>
 
-        {/* Hero Content Container with Staggered Entrance Animations */}
+        {/* Hero Content Container */}
         <div className="relative z-10 max-w-[85%] w-full mx-auto px-6 lg:px-12 flex flex-col justify-center">
           <div className="max-w-3xl space-y-6">
-
+            {/* Delivery Serviceability Pill / Status Badge */}
+            {deliveryCheck && (
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md border border-white/20 text-xs font-extrabold shadow-lg animate-fade-in">
+                {deliveryCheck.serviceable && deliveryCheck.mode === 'NOW' && (
+                  <span className="bg-emerald-500 text-slate-950 px-3 py-1 rounded-full flex items-center gap-1.5 animate-pulse">
+                    <span>🟢</span>
+                    <span>Delivering in few mins ({deliveryCheck.kitchenName || 'Abuja Kitchen'})</span>
+                  </span>
+                )}
+                {deliveryCheck.serviceable && deliveryCheck.mode === 'PRE_ORDER' && (
+                  <span className="bg-amber-400 text-slate-950 px-3 py-1 rounded-full flex items-center gap-1.5">
+                    <span>🟡</span>
+                    <span>Kitchen opens soon (Pre-order now for {deliveryCheck.scheduledFor?.local || '06:00 AM'})</span>
+                  </span>
+                )}
+                {!deliveryCheck.serviceable && (
+                  <span className="bg-red-500 text-white px-3 py-1 rounded-full flex items-center gap-1.5">
+                    <span>🔴</span>
+                    <span>Delivery Paused / Out of Zone</span>
+                  </span>
+                )}
+                <button
+                  onClick={handleUseMyLocation}
+                  className="text-white hover:text-amber-300 underline text-[11px] ml-2 font-mono"
+                >
+                  📍 Update Location
+                </button>
+              </div>
+            )}
 
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.1] animate-hero-entrance delay-200">
               Elevate Your Taste Buds.
-              {/* <span className="bg-gradient-to-r from-red-500 via-amber-400 to-orange-400 bg-clip-text text-transparent">
-                Gourmet Dining At Its Finest.
-              </span> */}
             </h1>
 
             <p className="text-white text-base sm:text-xl font-medium leading-relaxed max-w-2xl drop-shadow-md animate-hero-entrance delay-300">
@@ -61,6 +108,21 @@ export default function CustomerHomePage() {
                 Explore Menu ↓
               </a>
             </div>
+
+            {/* Serviceability Warning Banners */}
+            {deliveryCheck && !deliveryCheck.serviceable && (
+              <div className="p-4 rounded-2xl bg-red-950/80 border border-red-500/60 text-red-200 text-xs sm:text-sm font-bold shadow-2xl backdrop-blur-md animate-bounce-short">
+                {deliveryCheck.reason === 'OUT_OF_ZONE' && (
+                  <p>🚫 Sorry, we do not deliver to your location ({lat.toFixed(4)}, {lng.toFixed(4)}) yet.</p>
+                )}
+                {deliveryCheck.reason === 'KITCHEN_PAUSED' && (
+                  <p>⚠️ The nearest kitchen is temporarily paused due to high order volume. Please check back shortly.</p>
+                )}
+                {deliveryCheck.reason === 'ORDERING_PAUSED' && (
+                  <p>⛔ Online ordering is currently suspended across all kitchens for scheduled platform maintenance.</p>
+                )}
+              </div>
+            )}
 
             {/* Appetizing Highlights */}
             <div className="flex flex-wrap items-center sm:gap-8 gap-4 pt-8 border-t border-white/40 text-xs sm:text-sm text-white animate-hero-entrance delay-500">
@@ -87,20 +149,11 @@ export default function CustomerHomePage() {
           <div>
             <h2 className="text-3xl font-black text-slate-900 flex items-center gap-3">
               <span>🍳 Signature Specials Menu</span>
-              <span className="text-xs bg-slate-100 text-amber-700 border border-slate-200 px-3 py-1 rounded-full font-mono font-bold hidden md:block">
-                {presets.length} presets
-              </span>
             </h2>
             <p className="text-sm text-slate-500 mt-1">
-              Select your bread & egg combo, adjust quantity, and open your cart to checkout.
+              Select your bread & egg combo in <span className="font-bold text-red-600">{selectedCurrency}</span>, adjust quantity, and open your cart to checkout.
             </p>
           </div>
-          <button
-            onClick={fetchCatalog}
-            className="text-xs text-slate-500 hover:text-red-600 transition-colors font-medium self-start sm:self-auto"
-          >
-            🔄 Refresh Catalog
-          </button>
         </div>
 
         {loadingCatalog ? (
@@ -116,10 +169,11 @@ export default function CustomerHomePage() {
               return (
                 <div
                   key={preset.id}
-                  className={`glass-panel overflow-hidden transition-all border flex flex-col justify-between ${qty > 0
-                    ? 'border-red-500/60 ring-2 ring-red-500/20 shadow-xl shadow-red-500/10'
-                    : 'border-slate-200 hover:border-slate-300'
-                    }`}
+                  className={`glass-panel overflow-hidden transition-all border flex flex-col justify-between ${
+                    qty > 0
+                      ? 'border-red-500/60 ring-2 ring-red-500/20 shadow-xl shadow-red-500/10'
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
                 >
                   <div>
                     {/* Food Image Container */}
@@ -127,10 +181,13 @@ export default function CustomerHomePage() {
                       <img
                         src={preset.imageUrl}
                         alt={preset.name}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=800&auto=format&fit=crop&q=80';
+                        }}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                       />
                       <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-md px-3 py-1 rounded-xl border border-red-200 font-black text-amber-600 text-sm shadow-md">
-                        {formatNGN(preset.priceKobo)}
+                        {formatPrice(preset.priceKobo, selectedCurrency)}
                       </div>
                       {!preset.isAvailable && (
                         <div className="absolute inset-0 bg-white/85 flex items-center justify-center font-extrabold text-red-600 uppercase tracking-widest text-xs">
@@ -179,9 +236,7 @@ export default function CustomerHomePage() {
                           {qty}
                         </span>
                         <button
-                          onClick={() => {
-                            updateQuantity(preset.id, 1);
-                          }}
+                          onClick={() => updateQuantity(preset.id, 1)}
                           disabled={!preset.isAvailable}
                           className="w-8 h-8 rounded-lg btn-crimson font-extrabold flex items-center justify-center text-sm shadow-xs"
                         >

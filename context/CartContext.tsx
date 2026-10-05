@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { PresetMeal, QuoteResponse } from '@/lib/types';
+import { PresetMeal, QuoteResponse, DeliveryCheckResponse } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 
 interface CartContextType {
@@ -14,6 +14,11 @@ interface CartContextType {
   updateQuantity: (presetId: string, delta: number) => void;
   quote: QuoteResponse | null;
   quoteError: string;
+  selectedCurrency: string;
+  setSelectedCurrency: (currency: string) => void;
+  deliveryCheck: DeliveryCheckResponse | null;
+  checkingDelivery: boolean;
+  checkDeliveryServiceability: (lat: number, lng: number) => Promise<void>;
   lat: number;
   lng: number;
   address: string;
@@ -30,27 +35,43 @@ interface CartContextType {
   handleCreateOrderAndPay: () => Promise<void>;
   isSubmitting: boolean;
   formatNGN: (kobo: number) => string;
+  formatPrice: (amountKobo: number, currencyCode?: string) => string;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
+
+function getFallbackPresetImage(presetId: string): string {
+  if (presetId.includes('sausage')) {
+    return 'https://images.unsplash.com/photo-1588137378633-dea1336ce1e2?w=800&auto=format&fit=crop&q=80';
+  }
+  if (presetId.includes('fish')) {
+    return 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=800&auto=format&fit=crop&q=80';
+  }
+  return 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=800&auto=format&fit=crop&q=80';
+}
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [presets, setPresets] = useState<PresetMeal[]>([]);
   const [loadingCatalog, setLoadingCatalog] = useState(true);
+  const [selectedCurrency, setSelectedCurrency] = useState<string>('NGN');
+
+  // Delivery check state
+  const [deliveryCheck, setDeliveryCheck] = useState<DeliveryCheckResponse | null>(null);
+  const [checkingDelivery, setCheckingDelivery] = useState<boolean>(false);
 
   // Cart state: presetId -> quantity
   const [cart, setCart] = useState<Record<string, number>>({});
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
 
-  // Delivery Location state
-  const [lat, setLat] = useState<number>(6.5244);
-  const [lng, setLng] = useState<number>(3.3792);
-  const [address, setAddress] = useState<string>('12 Commercial Avenue, Yaba, Lagos');
-  const [landmark, setLandmark] = useState<string>('Opposite Domino Pizza');
+  // Delivery Location state (Abuja Wuse 2)
+  const [lat, setLat] = useState<number>(9.0778);
+  const [lng, setLng] = useState<number>(7.4819);
+  const [address, setAddress] = useState<string>('Plot 124 Aminu Kano Crescent, Wuse 2, Abuja');
+  const [landmark, setLandmark] = useState<string>('Opposite KFC Wuse 2');
 
   // Phone & Identity state
-  const [phone, setPhone] = useState<string>('08012345678');
+  const [phone, setPhone] = useState<string>('+2348039276495');
   const [note, setNote] = useState<string>('Extra hot pepper sauce on the side please');
 
   // Quote State
@@ -60,20 +81,65 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     fetchCatalog();
-  }, []);
+  }, [selectedCurrency]);
+
+  useEffect(() => {
+    checkDeliveryServiceability(lat, lng);
+  }, [lat, lng]);
 
   async function fetchCatalog() {
     setLoadingCatalog(true);
     try {
-      const res = await fetch('/api/catalog');
+      const res = await fetch(`/api/catalog?currency=${selectedCurrency}`);
       const data = await res.json();
-      if (data.presets) {
-        setPresets(data.presets);
+      
+      const rawList = data.presets || (data.categories ? data.categories.flatMap((c: any) => c.items || []) : []);
+      
+      if (Array.isArray(rawList) && rawList.length > 0) {
+        const normalized: PresetMeal[] = rawList.map((p: any) => {
+          const rawPrice = typeof p.priceKobo === 'number' 
+            ? p.priceKobo 
+            : (p.price?.amount ?? p.basePrice?.amount ?? p.amountMinor ?? 150000);
+
+          const img = (p.imageUrl && !p.imageUrl.includes('assets.meshaai.com'))
+            ? p.imageUrl
+            : getFallbackPresetImage(p.id || '');
+
+          return {
+            id: p.id,
+            name: p.name,
+            description: p.description || 'Delicious freshly prepared bread & egg special.',
+            components: p.components || ['Artisan Bread', 'Farm Eggs'],
+            priceKobo: rawPrice,
+            imageUrl: img,
+            isAvailable: p.available ?? p.isAvailable ?? true,
+            createdAt: p.createdAt || new Date().toISOString(),
+            updatedAt: p.updatedAt || new Date().toISOString(),
+          };
+        });
+        setPresets(normalized);
       }
     } catch (err) {
       console.error('Failed to load catalog:', err);
     } finally {
       setLoadingCatalog(false);
+    }
+  }
+
+  async function checkDeliveryServiceability(targetLat: number, targetLng: number) {
+    setCheckingDelivery(true);
+    try {
+      const res = await fetch('/api/delivery/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ latitude: targetLat, longitude: targetLng }),
+      });
+      const data = await res.json();
+      setDeliveryCheck(data);
+    } catch (err) {
+      console.error('Failed delivery check:', err);
+    } finally {
+      setCheckingDelivery(false);
     }
   }
 
@@ -176,7 +242,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       const createdOrder = orderData.order;
 
-      // Initialize Flutterwave payment
+      // Initialize Flutterwave payment or redirect to tracking
       const payRes = await fetch('/api/payments/initialize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -187,7 +253,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (payRes.ok && payData.checkoutUrl) {
         window.location.href = payData.checkoutUrl;
       } else {
-        alert('Order created! Redirecting to tracker...');
+        alert('Order created successfully! Redirecting to order tracker...');
         router.push(`/track?code=${createdOrder.code}&phone=${encodeURIComponent(phone)}`);
       }
     } catch (err: any) {
@@ -198,6 +264,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }
 
   const formatNGN = (kobo: number) => `₦${(kobo / 100).toLocaleString()}`;
+
+  const formatPrice = (amountKobo: number, currencyCode?: string) => {
+    const code = currencyCode || selectedCurrency;
+    const num = typeof amountKobo === 'number' && !isNaN(amountKobo) ? amountKobo : 0;
+    const amount = num / 100;
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: code,
+      }).format(amount);
+    } catch (e) {
+      return `${code} ${amount.toFixed(2)}`;
+    }
+  };
 
   return (
     <CartContext.Provider
@@ -211,6 +291,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         updateQuantity,
         quote,
         quoteError,
+        selectedCurrency,
+        setSelectedCurrency,
+        deliveryCheck,
+        checkingDelivery,
+        checkDeliveryServiceability,
         lat,
         lng,
         address,
@@ -227,6 +312,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         handleCreateOrderAndPay,
         isSubmitting,
         formatNGN,
+        formatPrice,
       }}
     >
       {children}

@@ -1,42 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cancelCustomerOrder } from '@/lib/orders';
-import { createProblemDetails } from '@/lib/utils/errors';
-import { broadcastAdminEvent } from '@/lib/events/sse';
+import { backendFetch, APIError } from '@/lib/api/backendClient';
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { id: code } = await params;
     const body = await req.json();
     const { phone, reason } = body;
 
-    if (!phone) {
-      return createProblemDetails(
-        400,
-        'Phone Required',
-        'Phone number is required to verify ownership before cancelling an order.',
-        'https://meshaai.com/errors/missing-phone',
-        `/api/orders/${id}/cancel`
-      );
-    }
-
-    const cancelledOrder = cancelCustomerOrder(id, phone, reason || 'Cancelled by customer');
-    broadcastAdminEvent('ORDER_UPDATED', { order: cancelledOrder });
+    const data = await backendFetch(`/api/v1/orders/${encodeURIComponent(code)}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify({ phone, reason }),
+      skipAuth: true,
+    });
 
     return NextResponse.json({
       success: true,
       message: 'Order cancelled successfully',
-      order: cancelledOrder,
+      order: data.order || data,
     });
   } catch (err: any) {
-    return createProblemDetails(
-      400,
-      'Cancellation Failed',
-      err.message || 'Unable to cancel order',
-      'https://meshaai.com/errors/cancellation-failed',
-      `/api/orders/cancel`
+    if (err instanceof APIError) {
+      return NextResponse.json(err.problem, { status: err.status });
+    }
+    return NextResponse.json(
+      {
+        type: 'https://meshaai.com/errors/cancellation-failed',
+        title: 'Cancellation Failed',
+        status: 400,
+        detail: err.message || 'Unable to cancel order',
+      },
+      { status: 400 }
     );
   }
 }

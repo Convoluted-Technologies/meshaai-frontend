@@ -1,34 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { calculateOrderQuote } from '@/lib/orders';
-import { createProblemDetails } from '@/lib/utils/errors';
-import { QuoteRequest } from '@/lib/types';
+import { backendFetch, APIError } from '@/lib/api/backendClient';
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as QuoteRequest;
+    const body = await req.json();
+    const data = await backendFetch('/api/v1/orders/quote', {
+      method: 'POST',
+      body: JSON.stringify(body),
+      skipAuth: true,
+    });
 
-    if (!body.items || !Array.isArray(body.items) || body.items.length === 0) {
-      return createProblemDetails(
-        400,
-        'Invalid Request Body',
-        'Quote request must include at least one item.',
-        'https://meshaai.com/errors/invalid-items',
-        '/api/quote'
-      );
-    }
-
-    const quote = calculateOrderQuote(body);
     return NextResponse.json({
-      success: true,
-      quote,
+      quote: {
+        items: data.items || [],
+        subtotalKobo: data.subtotalKobo || data.subtotal?.amount || 0,
+        deliveryFeeKobo: data.deliveryFeeKobo || data.deliveryFee?.amount || 0,
+        grandTotalKobo: data.grandTotalKobo || data.total?.amount || 0,
+        deliveryDistanceKm: data.deliveryDistanceKm || data.distanceKm,
+        isWithinZone: data.isWithinZone ?? data.serviceable ?? true,
+        zoneMessage: data.zoneMessage || data.reason,
+      },
     });
   } catch (err: any) {
-    return createProblemDetails(
-      400,
-      'Quote Calculation Failed',
-      err.message || 'Failed to calculate quote',
-      'https://meshaai.com/errors/quote-failed',
-      '/api/quote'
+    if (err instanceof APIError) {
+      return NextResponse.json(err.problem, { status: err.status });
+    }
+    return NextResponse.json(
+      {
+        type: 'https://meshaai.com/errors/quote-failed',
+        title: 'Quote Calculation Error',
+        status: 400,
+        detail: err.message || 'Failed to calculate quote',
+        code: 'QUOTE_FAILED',
+      },
+      { status: 400 }
     );
   }
 }

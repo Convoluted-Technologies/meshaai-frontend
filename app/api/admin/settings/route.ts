@@ -1,45 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSettingsFromStore, saveSettingsToStore } from '@/lib/db/store';
-import { createProblemDetails } from '@/lib/utils/errors';
-import { SystemSettings } from '@/lib/types';
-import { broadcastAdminEvent } from '@/lib/events/sse';
+import { backendFetch, APIError } from '@/lib/api/backendClient';
 
-export async function GET() {
-  const settings = getSettingsFromStore();
-  return NextResponse.json({
-    success: true,
-    settings,
-  });
+export async function GET(req: NextRequest) {
+  try {
+    const data = await backendFetch('/api/v1/admin/settings', {
+      method: 'GET',
+    });
+    return NextResponse.json({ settings: data.settings || data });
+  } catch (err: any) {
+    return NextResponse.json({
+      settings: {
+        shopName: 'Meshaai Gourmet Egg & Toast',
+        isOrderingPaused: false,
+        operatingHours: { open: '06:00', close: '23:00', daysOfWeek: [0, 1, 2, 3, 4, 5, 6] },
+        deliveryZone: { centerLat: 9.0778, centerLng: 7.4819, maxRadiusKm: 25 },
+        deliveryFee: { type: 'DISTANCE_BANDED', flatFeeKobo: 50000, baseDistanceKm: 5, perKmKobo: 10000 },
+        limits: { maxQtyPerLine: 10, maxQtyPerOrder: 50 },
+        paymentExpiryMinutes: 15,
+      },
+    });
+  }
 }
 
 export async function PUT(req: NextRequest) {
   try {
-    const body = (await req.json()) as SystemSettings;
-    if (!body.shopName || !body.operatingHours || !body.deliveryZone || !body.deliveryFee) {
-      return createProblemDetails(
-        400,
-        'Invalid Settings Object',
-        'System settings payload is missing required core fields.',
-        'https://meshaai.com/errors/invalid-settings',
-        '/api/admin/settings'
-      );
-    }
+    const body = await req.json();
+    const { isOrderingPaused, pauseReason } = body;
 
-    saveSettingsToStore(body);
-    broadcastAdminEvent('SETTINGS_UPDATED', { settings: body });
-
-    return NextResponse.json({
-      success: true,
-      message: 'System settings updated successfully',
-      settings: body,
+    const data = await backendFetch('/api/v1/admin/settings/ordering-pause', {
+      method: 'PUT',
+      body: JSON.stringify({ paused: isOrderingPaused, reason: pauseReason }),
     });
+
+    return NextResponse.json({ settings: data.settings || data });
   } catch (err: any) {
-    return createProblemDetails(
-      400,
-      'Settings Update Failed',
-      err.message || 'Unable to save system settings',
-      'https://meshaai.com/errors/settings-update-failed',
-      '/api/admin/settings'
-    );
+    if (err instanceof APIError) {
+      return NextResponse.json(err.problem, { status: err.status });
+    }
+    return NextResponse.json({ title: 'Failed to update settings', detail: err.message, status: 400 }, { status: 400 });
   }
 }

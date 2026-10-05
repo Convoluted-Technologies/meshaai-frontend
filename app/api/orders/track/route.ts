@@ -1,35 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { findOrderByCodeAndPhone } from '@/lib/db/store';
-import { createProblemDetails } from '@/lib/utils/errors';
+import { backendFetch, APIError } from '@/lib/api/backendClient';
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const code = searchParams.get('code');
-  const phone = searchParams.get('phone');
+  try {
+    const { searchParams } = new URL(req.url);
+    const code = searchParams.get('code');
+    const phone = searchParams.get('phone');
 
-  if (!code || !phone) {
-    return createProblemDetails(
-      400,
-      'Missing Parameters',
-      'Both order code and phone number are required to track an order.',
-      'https://meshaai.com/errors/missing-track-params',
-      '/api/orders/track'
+    if (!code) {
+      return NextResponse.json(
+        { title: 'Missing Order Code', detail: 'Order code is required', status: 400 },
+        { status: 400 }
+      );
+    }
+
+    const data = await backendFetch(`/api/v1/orders/${encodeURIComponent(code)}/status`, {
+      method: 'GET',
+      skipAuth: true,
+    });
+
+    return NextResponse.json({
+      order: data.order || data,
+    });
+  } catch (err: any) {
+    if (err instanceof APIError) {
+      return NextResponse.json(err.problem, { status: err.status });
+    }
+    return NextResponse.json(
+      {
+        type: 'https://meshaai.com/errors/order-not-found',
+        title: 'Order Not Found',
+        status: 404,
+        detail: err.message || 'Order code not found or invalid',
+        code: 'ORDER_NOT_FOUND',
+      },
+      { status: 404 }
     );
   }
-
-  const order = findOrderByCodeAndPhone(code, phone);
-  if (!order) {
-    return createProblemDetails(
-      404,
-      'Order Not Found',
-      `No order found with code ${code.toUpperCase()} matching phone number ${phone}.`,
-      'https://meshaai.com/errors/order-not-found',
-      '/api/orders/track'
-    );
-  }
-
-  return NextResponse.json({
-    success: true,
-    order,
-  });
 }

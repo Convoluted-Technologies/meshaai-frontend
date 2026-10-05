@@ -5,83 +5,60 @@ import {
   Order,
   OrderStatus,
   PresetMeal,
-  PresetVersionHistory,
-  PaymentRecord,
-  SystemSettings,
 } from '@/lib/types';
 
 export default function AdminStudioPage() {
-  // Auth state
+  // Auth state - Default username: AdminLogin, Password: Admin@2026
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('admin123');
+  const [username, setUsername] = useState('AdminLogin');
+  const [password, setPassword] = useState('Admin@2026');
   const [adminUser, setAdminUser] = useState<any>(null);
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<
-    'orders' | 'catalog' | 'payments' | 'customers' | 'settings' | 'dashboard'
+    'orders' | 'catalog' | 'delivered' | 'settings'
   >('orders');
 
   // Orders State
   const [orders, setOrders] = useState<Order[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   // Rider Modal
+  const [assigningRiderOrder, setAssigningRiderOrder] = useState<Order | null>(null);
   const [riderName, setRiderName] = useState('Tunde Bako');
   const [riderPhone, setRiderPhone] = useState('08099887766');
 
-  // Catalog State
+  // Product / Catalog State
   const [presets, setPresets] = useState<PresetMeal[]>([]);
-  const [versions, setVersions] = useState<PresetVersionHistory[]>([]);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingPreset, setEditingPreset] = useState<Partial<PresetMeal> | null>(null);
 
-  // Payments State
-  const [payments, setPayments] = useState<PaymentRecord[]>([]);
-
-  // Customers State
-  const [customers, setCustomers] = useState<any[]>([]);
+  // Product Form State
+  const [productName, setProductName] = useState('');
+  const [productDesc, setProductDesc] = useState('');
+  const [productPriceNgn, setProductPriceNgn] = useState('');
+  const [productImage, setProductImage] = useState('');
+  const [productComponents, setProductComponents] = useState('');
+  const [productAvailable, setProductAvailable] = useState(true);
 
   // Settings State
-  const [settings, setSettings] = useState<SystemSettings | null>(null);
+  const [isOrderingPaused, setIsOrderingPaused] = useState(false);
 
-  // Metrics State
-  const [metrics, setMetrics] = useState<any>(null);
-
-  // Auto-SSE Event Listener
+  // Fetch initial data on login
   useEffect(() => {
     if (!isAdminLoggedIn) return;
 
     fetchData();
 
-    // Subscribe to SSE events
-    const eventSource = new EventSource('/api/admin/events');
-    eventSource.addEventListener('NEW_ORDER', (e) => {
-      fetchOrders();
-      fetchDashboard();
-    });
-    eventSource.addEventListener('ORDER_UPDATED', (e) => {
-      fetchOrders();
-      fetchDashboard();
-    });
-    eventSource.addEventListener('ORDER_PAID', (e) => {
-      fetchOrders();
-      fetchDashboard();
-    });
-
-    return () => {
-      eventSource.close();
-    };
+    const interval = setInterval(fetchData, 8000);
+    return () => clearInterval(interval);
   }, [isAdminLoggedIn]);
 
   function fetchData() {
     fetchOrders();
     fetchCatalog();
-    fetchPayments();
-    fetchCustomers();
     fetchSettings();
-    fetchDashboard();
   }
 
   async function handleAdminLogin(e: React.FormEvent) {
@@ -97,10 +74,10 @@ export default function AdminStudioPage() {
         setAdminUser(data.user);
         setIsAdminLoggedIn(true);
       } else {
-        alert(data.detail || 'Invalid admin credentials');
+        alert(data.detail || 'Invalid credentials. Please use AdminLogin / Admin@2026');
       }
     } catch (err) {
-      alert('Login error');
+      alert('Login network error');
     }
   }
 
@@ -119,27 +96,6 @@ export default function AdminStudioPage() {
       const res = await fetch('/api/admin/catalog');
       const data = await res.json();
       if (data.presets) setPresets(data.presets);
-      if (data.versions) setVersions(data.versions);
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  async function fetchPayments() {
-    try {
-      const res = await fetch('/api/admin/payments');
-      const data = await res.json();
-      if (data.payments) setPayments(data.payments);
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  async function fetchCustomers() {
-    try {
-      const res = await fetch('/api/admin/customers');
-      const data = await res.json();
-      if (data.customers) setCustomers(data.customers);
     } catch (err) {
       console.error(err);
     }
@@ -149,907 +105,770 @@ export default function AdminStudioPage() {
     try {
       const res = await fetch('/api/admin/settings');
       const data = await res.json();
-      if (data.settings) setSettings(data.settings);
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  async function fetchDashboard() {
-    try {
-      const res = await fetch('/api/admin/dashboard');
-      const data = await res.json();
-      if (data.metrics) setMetrics(data.metrics);
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  // --- ACTIONS ---
-
-  async function handleUpdateOrderStatus(orderId: string, status: OrderStatus) {
-    const reason = prompt(`Enter reason for transitioning order to ${status}:`, `Admin updated status to ${status}`);
-    if (reason === null) return;
-
-    try {
-      const res = await fetch(`/api/admin/orders/${orderId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, reason }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        fetchOrders();
-        fetchDashboard();
-        if (selectedOrder && selectedOrder.id === orderId) {
-          setSelectedOrder(data.order);
-        }
-      } else {
-        alert(data.detail || 'Status transition failed');
+      if (data.settings) {
+        setIsOrderingPaused(data.settings.isOrderingPaused ?? false);
       }
     } catch (err) {
-      alert('Error updating status');
+      console.error(err);
     }
   }
 
-  async function handleAssignRider(orderId: string) {
-    if (!riderName || !riderPhone) return alert('Provide rider name & phone');
+  // --- ORDER STATUS LIFECYCLE ---
+  async function updateOrderStatus(orderId: string, newStatus: OrderStatus, reason?: string) {
     try {
-      const res = await fetch(`/api/admin/orders/${orderId}/assign-rider`, {
+      const res = await fetch(`/api/admin/orders/${orderId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus, reason: reason || `Updated to ${newStatus} by Admin` }),
+      });
+      if (res.ok) {
+        fetchOrders();
+      } else {
+        const data = await res.json();
+        alert(data.detail || 'Failed to update order status');
+      }
+    } catch (err) {
+      alert('Network error updating order status');
+    }
+  }
+
+  async function handleAssignRider(e: React.FormEvent) {
+    e.preventDefault();
+    if (!assigningRiderOrder) return;
+
+    try {
+      const res = await fetch(`/api/admin/orders/${assigningRiderOrder.id}/assign-rider`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ riderName, riderPhone }),
       });
-      const data = await res.json();
       if (res.ok) {
-        fetchOrders();
-        alert(`Rider assigned to order!`);
-        setSelectedOrder(data.order);
+        await updateOrderStatus(assigningRiderOrder.id, 'OUT_FOR_DELIVERY', `Rider ${riderName} assigned`);
+        setAssigningRiderOrder(null);
       } else {
-        alert(data.detail || 'Assign rider failed');
+        alert('Failed to assign rider');
       }
     } catch (err) {
       alert('Error assigning rider');
     }
   }
 
-  async function handleSavePreset(e: React.FormEvent) {
+  // --- PRODUCT CRUD HANDLERS ---
+  function openAddProductModal() {
+    setEditingPreset(null);
+    setProductName('');
+    setProductDesc('');
+    setProductPriceNgn('');
+    setProductImage('');
+    setProductComponents('Artisan Bread, Farm Eggs');
+    setProductAvailable(true);
+    setIsProductModalOpen(true);
+  }
+
+  function openEditProductModal(preset: PresetMeal) {
+    setEditingPreset(preset);
+    setProductName(preset.name);
+    setProductDesc(preset.description);
+    setProductPriceNgn((preset.priceKobo / 100).toString());
+    setProductImage(preset.imageUrl);
+    setProductComponents(preset.components.join(', '));
+    setProductAvailable(preset.isAvailable);
+    setIsProductModalOpen(true);
+  }
+
+  async function handleSaveProduct(e: React.FormEvent) {
     e.preventDefault();
-    if (!editingPreset) return;
+    if (!productName || !productPriceNgn) {
+      alert('Please fill in product name and price.');
+      return;
+    }
+
+    const priceKobo = Math.round(parseFloat(productPriceNgn) * 100);
+
     try {
       const res = await fetch('/api/admin/catalog', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingPreset),
+        body: JSON.stringify({
+          ...(editingPreset ? { id: editingPreset.id } : {}),
+          name: productName,
+          description: productDesc,
+          priceKobo,
+          imageUrl: productImage,
+          components: productComponents.split(',').map((c) => c.trim()).filter(Boolean),
+          isAvailable: productAvailable,
+        }),
       });
-      const data = await res.json();
+
       if (res.ok) {
+        setIsProductModalOpen(false);
         fetchCatalog();
-        setEditingPreset(null);
-        alert('Preset saved successfully!');
       } else {
-        alert(data.detail || 'Failed to save preset');
+        const data = await res.json();
+        alert(data.detail || 'Failed to save product');
       }
     } catch (err) {
-      alert('Error saving preset');
+      alert('Error saving product');
     }
   }
 
-  async function handleTogglePreset(id: string, current: boolean) {
+  async function handleDeleteProduct(presetId: string, presetName: string) {
+    if (!confirm(`Are you sure you want to delete product "${presetName}"?`)) return;
+
+    try {
+      const res = await fetch(`/api/admin/catalog?id=${presetId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        fetchCatalog();
+      } else {
+        alert('Failed to delete product');
+      }
+    } catch (err) {
+      alert('Error deleting product');
+    }
+  }
+
+  async function handleToggleAvailability(preset: PresetMeal) {
     try {
       const res = await fetch('/api/admin/catalog', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, isAvailable: !current }),
+        body: JSON.stringify({
+          id: preset.id,
+          isAvailable: !preset.isAvailable,
+        }),
       });
-      if (res.ok) fetchCatalog();
+      if (res.ok) {
+        fetchCatalog();
+      }
     } catch (err) {
       console.error(err);
     }
   }
 
-  async function handleRollbackCatalog(versionId: string) {
-    if (!confirm(`Are you sure you want to rollback catalog to version ${versionId}?`)) return;
-    try {
-      const res = await fetch('/api/admin/catalog/rollback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ versionId }),
-      });
-      if (res.ok) {
-        fetchCatalog();
-        alert('Catalog rolled back successfully!');
-      } else {
-        alert('Rollback failed');
-      }
-    } catch (err) {
-      alert('Rollback error');
-    }
-  }
-
-  async function handleRefundOrder(orderId: string) {
-    const amountStr = prompt('Enter refund amount in Kobo (leave blank for full refund):');
-    const reason = prompt('Reason for refund:', 'Admin customer resolution');
-    if (reason === null) return;
-
-    try {
-      const res = await fetch(`/api/admin/payments/${orderId}/refund`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amountKobo: amountStr ? Number(amountStr) : undefined,
-          reason,
-        }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        fetchOrders();
-        fetchPayments();
-        fetchDashboard();
-        alert('Refund processed successfully!');
-      } else {
-        alert(data.detail || 'Refund failed');
-      }
-    } catch (err) {
-      alert('Error executing refund');
-    }
-  }
-
-  async function handleBlockCustomer(phone: string, isBlocked: boolean) {
-    try {
-      const res = await fetch(`/api/admin/customers/${encodeURIComponent(phone)}/block`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ block: !isBlocked }),
-      });
-      if (res.ok) fetchCustomers();
-    } catch (err) {
-      alert('Error blocking customer');
-    }
-  }
-
-  async function handleToggleKillSwitch() {
-    if (!settings) return;
-    const nextPaused = !settings.isOrderingPaused;
-    if (
-      !confirm(
-        nextPaused
-          ? 'WARNING: This will PAUSE all customer order placements across the system. Continue?'
-          : 'Resume customer ordering?'
-      )
-    )
-      return;
-
-    const updated = { ...settings, isOrderingPaused: nextPaused };
+  async function handleToggleOrderingPause() {
     try {
       const res = await fetch('/api/admin/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated),
+        body: JSON.stringify({
+          isOrderingPaused: !isOrderingPaused,
+          pauseReason: !isOrderingPaused ? 'Admin pause' : '',
+        }),
       });
       if (res.ok) {
-        setSettings(updated);
-        alert(nextPaused ? 'Ordering PAUSED (Kill-Switch Active)' : 'Ordering RESUMED');
+        setIsOrderingPaused(!isOrderingPaused);
       }
     } catch (err) {
-      alert('Error saving kill-switch');
+      alert('Failed to toggle ordering pause');
     }
   }
 
   const formatNGN = (kobo: number) => `₦${(kobo / 100).toLocaleString()}`;
 
-  // Filtered Orders
+  // Filtered orders
   const filteredOrders = orders.filter((o) => {
     if (statusFilter !== 'ALL' && o.status !== statusFilter) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       return (
         o.code.toLowerCase().includes(q) ||
-        o.phone.includes(q) ||
+        o.phone.toLowerCase().includes(q) ||
         o.location.address.toLowerCase().includes(q)
       );
     }
     return true;
   });
 
+  const deliveredOrders = orders.filter((o) => o.status === 'DELIVERED');
+  const deliveredRevenue = deliveredOrders.reduce((sum, o) => sum + o.totalKobo, 0);
+
+  // --- LOGIN SCREEN ---
   if (!isAdminLoggedIn) {
     return (
-      <div className="max-w-md mx-auto py-12">
-        <div className="glass-panel p-8 space-y-6">
+      <div className="min-h-screen bg-white flex items-center justify-center px-4">
+        <div className="max-w-md w-full glass-panel p-8 rounded-3xl border border-slate-800 shadow-2xl space-y-6 text-black animate-fade-in">
           <div className="text-center space-y-2">
-            <div className="w-12 h-12 bg-amber-500/20 text-amber-400 rounded-xl flex items-center justify-center text-2xl mx-auto border border-amber-500/30">
+            <div className="w-14 h-14 bg-gradient-to-tr from-red-600 via-amber-500 to-orange-500 rounded-2xl mx-auto flex items-center justify-center text-2xl shadow-xl shadow-red-600/30">
               🔑
             </div>
-            <h1 className="text-2xl font-bold text-white">Admin Studio Login</h1>
-            <p className="text-xs text-slate-400">
-              Access live order queue, rider dispatch, catalog manager, and store settings.
-            </p>
+            <h1 className="text-2xl font-black tracking-wider uppercase">MESHA-AI ADMIN</h1>
+            <p className="text-xs text-slate-400">Operator Console & Order Management Studio</p>
           </div>
 
           <form onSubmit={handleAdminLogin} className="space-y-4">
             <div>
-              <label className="text-xs text-slate-300 block mb-1 font-medium">Username or Email</label>
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                Admin Username
+              </label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full text-sm bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 font-mono"
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white font-mono focus:outline-none focus:border-red-500"
+                placeholder="AdminLogin"
+                required
               />
             </div>
+
             <div>
-              <label className="text-xs text-slate-300 block mb-1 font-medium">Password</label>
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                Admin Password
+              </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full text-sm bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 font-mono"
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white font-mono focus:outline-none focus:border-red-500"
+                placeholder="Admin@2026"
+                required
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm transition-all shadow-md shadow-amber-500/20"
+              className="btn-crimson w-full py-3.5 rounded-xl font-black text-sm uppercase tracking-wider shadow-lg shadow-red-600/30"
             >
-              Sign In to Operator Console
+              Sign In to Operator Console →
             </button>
           </form>
 
-          <p className="text-[11px] text-center text-slate-500">
-            Default credentials: <code className="text-amber-400 font-mono">admin / admin123</code> or <code className="text-amber-400 font-mono">operator / ops123</code>
-          </p>
+          <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 text-[11px] text-amber-400 font-mono text-center">
+            Credentials: <b>AdminLogin</b> / <b>Admin@2026</b>
+          </div>
         </div>
       </div>
     );
   }
 
+  // --- ADMIN MAIN DASHBOARD ---
   return (
-    <div className="space-y-6 pb-12">
-      {/* Admin Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel p-4 sm:p-6 border-amber-500/20">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-extrabold text-white">⚙️ Admin Studio Operator Console</h1>
-            <span className="text-xs bg-amber-500/20 text-amber-300 px-2.5 py-0.5 rounded-full font-mono font-bold border border-amber-500/30">
-              {adminUser?.role || 'SUPER_ADMIN'}
-            </span>
+    <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
+      {/* Header Bar */}
+      <header className="bg-slate-900 text-white sticky top-0 z-30 shadow-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🔑</span>
+            <span className="font-black text-lg tracking-wider uppercase">MESHA-AI OPERATOR STUDIO</span>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Real-time SSE order alerts • Hot-reloaded JSON catalog • Flutterwave reconciliation
-          </p>
-        </div>
 
-        {/* Kill switch & user indicator */}
-        <div className="flex items-center gap-3">
-          {settings && (
+          <div className="flex items-center gap-4">
             <button
-              onClick={handleToggleKillSwitch}
-              className={`px-4 py-2 rounded-xl font-bold text-xs transition-all border ${
-                settings.isOrderingPaused
-                  ? 'bg-red-500 text-slate-950 border-red-400 animate-pulse'
-                  : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/30'
-              }`}
+              onClick={handleToggleOrderingPause}
+              className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all ${isOrderingPaused
+                ? 'bg-red-600 text-white animate-pulse'
+                : 'bg-emerald-950 text-emerald-400 border border-emerald-600/40'
+                }`}
             >
-              {settings.isOrderingPaused ? '⛔ ORDERING PAUSED (KILL SWITCH)' : '✅ ORDERING ACTIVE'}
+              <span>{isOrderingPaused ? '🔴 Kitchen Paused' : '🟢 Kitchen Active'}</span>
             </button>
-          )}
+
+            <button
+              onClick={() => setIsAdminLoggedIn(false)}
+              className="text-xs font-bold text-slate-400 hover:text-white px-3 py-1.5 rounded-lg border border-slate-700"
+            >
+              Logout 🚪
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content Area */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
+        {/* Navigation Tabs */}
+        <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-4">
           <button
-            onClick={() => setIsAdminLoggedIn(false)}
-            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700"
+            onClick={() => setActiveTab('orders')}
+            className={`px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all ${activeTab === 'orders'
+              ? 'bg-red-600 text-white shadow-md'
+              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+              }`}
           >
-            Logout
+            🚚 Live Orders ({orders.filter((o) => o.status !== 'DELIVERED' && o.status !== 'CANCELLED').length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('catalog')}
+            className={`px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all ${activeTab === 'catalog'
+              ? 'bg-red-600 text-white shadow-md'
+              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+              }`}
+          >
+            📦 Products & Menu ({presets.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('delivered')}
+            className={`px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all ${activeTab === 'delivered'
+              ? 'bg-red-600 text-white shadow-md'
+              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+              }`}
+          >
+            ✅ Delivered Tracker ({deliveredOrders.length})
           </button>
         </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-800">
-        {[
-          { id: 'orders', label: `📦 Live Orders (${orders.length})` },
-          { id: 'catalog', label: `🍔 Catalog & Rollback` },
-          { id: 'payments', label: `💳 Transactions & Refunds` },
-          { id: 'customers', label: `👥 Customers & Blocklist` },
-          { id: 'settings', label: `⚙️ Store Settings` },
-          { id: 'dashboard', label: `📊 Analytics Dashboard` },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`px-4 py-2.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all ${
-              activeTab === tab.id
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'bg-slate-900/80 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* TAB 1: LIVE ORDERS QUEUE */}
-      {activeTab === 'orders' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            {/* Status Filter Buttons */}
-            <div className="flex flex-wrap gap-1.5 text-xs">
-              {['ALL', 'PENDING_PAYMENT', 'PAID', 'CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'REFUNDED'].map(
-                (st) => (
+        {/* TAB 1: LIVE ORDERS QUEUE */}
+        {activeTab === 'orders' && (
+          <div className="space-y-6">
+            {/* Filters Bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+              <div className="flex flex-wrap gap-2">
+                {['ALL', 'PENDING_PAYMENT', 'CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY'].map((st) => (
                   <button
                     key={st}
                     onClick={() => setStatusFilter(st)}
-                    className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
-                      statusFilter === st
-                        ? 'bg-slate-700 text-amber-400 border border-amber-500/40'
-                        : 'bg-slate-900 text-slate-400 hover:bg-slate-800'
-                    }`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all ${statusFilter === st
+                      ? 'bg-slate-900 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
                   >
                     {st}
                   </button>
-                )
-              )}
-            </div>
-
-            <input
-              type="text"
-              placeholder="Search code, phone, address..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="text-xs bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-slate-100 w-full sm:w-64 focus:outline-none focus:border-amber-500"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Orders Table List */}
-            <div className="lg:col-span-8 glass-panel overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-900/80 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
-                    <tr>
-                      <th className="p-3">Order Code</th>
-                      <th className="p-3">Customer Phone</th>
-                      <th className="p-3">Amount</th>
-                      <th className="p-3">Status</th>
-                      <th className="p-3">Rider</th>
-                      <th className="p-3">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60 font-mono">
-                    {filteredOrders.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="p-8 text-center text-slate-500 italic font-sans">
-                          No orders match the current filter criteria.
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredOrders.map((o) => (
-                        <tr
-                          key={o.id}
-                          onClick={() => setSelectedOrder(o)}
-                          className={`hover:bg-slate-800/40 cursor-pointer transition-colors ${
-                            selectedOrder?.id === o.id ? 'bg-amber-500/10' : ''
-                          }`}
-                        >
-                          <td className="p-3 font-bold text-amber-400">#{o.code}</td>
-                          <td className="p-3 text-slate-200">{o.phone}</td>
-                          <td className="p-3 text-slate-100 font-bold">{formatNGN(o.totalKobo)}</td>
-                          <td className="p-3">
-                            <span
-                              className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                o.status === 'DELIVERED'
-                                  ? 'bg-emerald-500/20 text-emerald-400'
-                                  : o.status === 'PAID'
-                                  ? 'bg-blue-500/20 text-blue-400'
-                                  : o.status === 'CANCELLED' || o.status === 'REFUNDED'
-                                  ? 'bg-red-500/20 text-red-400'
-                                  : 'bg-amber-500/20 text-amber-400'
-                              }`}
-                            >
-                              {o.status}
-                            </span>
-                          </td>
-                          <td className="p-3 text-slate-300">{o.rider?.name || '—'}</td>
-                          <td className="p-3">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedOrder(o);
-                              }}
-                              className="text-amber-400 hover:underline font-sans text-[11px]"
-                            >
-                              Manage →
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                ))}
               </div>
-            </div>
-
-            {/* Selected Order Drawer & State Machine Operator */}
-            <div className="lg:col-span-4">
-              {selectedOrder ? (
-                <div className="glass-panel p-5 space-y-6 sticky top-20">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <div>
-                      <h3 className="font-extrabold text-amber-400 text-lg font-mono">
-                        #{selectedOrder.code}
-                      </h3>
-                      <p className="text-[11px] text-slate-400">{selectedOrder.phone}</p>
-                    </div>
-                    <span className="text-xs bg-slate-800 text-slate-200 px-2.5 py-1 rounded font-bold">
-                      {selectedOrder.status}
-                    </span>
-                  </div>
-
-                  {/* Delivery Info */}
-                  <div className="space-y-1 text-xs text-slate-300 bg-slate-900/80 p-3 rounded-xl border border-slate-800">
-                    <p className="font-semibold text-slate-100">{selectedOrder.location.address}</p>
-                    <p className="text-slate-400">Landmark: {selectedOrder.location.landmark}</p>
-                    {selectedOrder.note && <p className="text-amber-400 italic">Note: "{selectedOrder.note}"</p>}
-                  </div>
-
-                  {/* Rider Assignment Box */}
-                  <div className="space-y-3 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
-                    <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider">
-                      Assign Dispatch Rider
-                    </h4>
-                    <div className="space-y-2">
-                      <input
-                        type="text"
-                        placeholder="Rider Name"
-                        value={riderName}
-                        onChange={(e) => setRiderName(e.target.value)}
-                        className="w-full text-xs bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-100"
-                      />
-                      <input
-                        type="tel"
-                        placeholder="Rider Phone"
-                        value={riderPhone}
-                        onChange={(e) => setRiderPhone(e.target.value)}
-                        className="w-full text-xs bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-100 font-mono"
-                      />
-                      <button
-                        onClick={() => handleAssignRider(selectedOrder.id)}
-                        className="w-full py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs font-semibold rounded-lg border border-slate-700"
-                      >
-                        Assign / Update Rider
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* State Machine Transition Buttons */}
-                  <div className="space-y-2">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                      Force State Transition
-                    </h4>
-                    <div className="grid grid-cols-2 gap-2">
-                      {['CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'FAILED_DELIVERY'].map(
-                        (st) => (
-                          <button
-                            key={st}
-                            onClick={() => handleUpdateOrderStatus(selectedOrder.id, st as OrderStatus)}
-                            className="py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold rounded-lg border border-slate-700 transition-colors"
-                          >
-                            → {st}
-                          </button>
-                        )
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Refund Trigger */}
-                  <button
-                    onClick={() => handleRefundOrder(selectedOrder.id)}
-                    className="w-full py-2 bg-red-950/80 hover:bg-red-900 text-red-300 font-semibold text-xs rounded-xl border border-red-800"
-                  >
-                    💳 Trigger Flutterwave Refund
-                  </button>
-                </div>
-              ) : (
-                <div className="glass-panel p-8 text-center text-slate-500 text-xs italic">
-                  Select an order from the list to view rider details, audit history, and state transitions.
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 2: CATALOG MANAGER & ROLLBACK */}
-      {activeTab === 'catalog' && (
-        <div className="space-y-8">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-white">🍔 Meal Presets JSON Catalog</h2>
-            <button
-              onClick={() =>
-                setEditingPreset({
-                  name: '',
-                  description: '',
-                  components: ['1 Loaf Fresh Bread', '2 Fried Eggs'],
-                  priceKobo: 150000,
-                  imageUrl: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=600&auto=format&fit=crop&q=80',
-                  isAvailable: true,
-                })
-              }
-              className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-md shadow-amber-500/20"
-            >
-              + Create New Preset
-            </button>
-          </div>
-
-          {/* Preset Create/Edit Form Modal */}
-          {editingPreset && (
-            <form onSubmit={handleSavePreset} className="glass-panel p-6 space-y-4 border-amber-500/40">
-              <h3 className="font-bold text-white text-base">
-                {editingPreset.id ? 'Edit Preset' : 'Create Preset'}
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  placeholder="Preset Name"
-                  value={editingPreset.name || ''}
-                  onChange={(e) => setEditingPreset({ ...editingPreset, name: e.target.value })}
-                  className="text-xs bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100"
-                />
-                <input
-                  type="number"
-                  placeholder="Price in Kobo (e.g. 150000 = ₦1,500)"
-                  value={editingPreset.priceKobo || 0}
-                  onChange={(e) => setEditingPreset({ ...editingPreset, priceKobo: Number(e.target.value) })}
-                  className="text-xs bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 font-mono"
-                />
-              </div>
-
-              <textarea
-                placeholder="Description"
-                value={editingPreset.description || ''}
-                onChange={(e) => setEditingPreset({ ...editingPreset, description: e.target.value })}
-                className="w-full text-xs bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 h-16"
-              />
 
               <input
                 type="text"
-                placeholder="Components (comma separated)"
-                value={editingPreset.components?.join(', ') || ''}
-                onChange={(e) =>
-                  setEditingPreset({
-                    ...editingPreset,
-                    components: e.target.value.split(',').map((s) => s.trim()),
-                  })
-                }
-                className="w-full text-xs bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100"
+                placeholder="Search order code, phone, address..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full sm:w-64 text-xs bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 focus:outline-none focus:border-red-500 font-mono"
               />
+            </div>
 
-              <div className="flex gap-2">
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl"
-                >
-                  Save Preset
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEditingPreset(null)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 text-xs rounded-xl"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* Preset List */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {presets.map((preset) => (
-              <div key={preset.id} className="glass-panel p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-white text-sm">{preset.name}</h3>
-                  <span className="font-mono font-bold text-amber-400 text-sm">{formatNGN(preset.priceKobo)}</span>
+            {/* Orders Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredOrders.length === 0 ? (
+                <div className="col-span-full text-center py-12 bg-white rounded-2xl border border-slate-200">
+                  <span className="text-4xl block">🍳</span>
+                  <p className="font-bold text-slate-700 mt-2">No active orders matching query</p>
                 </div>
-                <p className="text-xs text-slate-400 line-clamp-2">{preset.description}</p>
-                <div className="flex items-center justify-between pt-2 border-t border-slate-800">
-                  <button
-                    onClick={() => handleTogglePreset(preset.id, preset.isAvailable)}
-                    className={`px-3 py-1 rounded text-xs font-bold ${
-                      preset.isAvailable
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                        : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                    }`}
-                  >
-                    {preset.isAvailable ? 'Available' : 'Sold Out'}
-                  </button>
-                  <button
-                    onClick={() => setEditingPreset(preset)}
-                    className="text-xs text-amber-400 hover:underline"
-                  >
-                    Edit →
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Catalog Version History & Rollback */}
-          <div className="glass-panel p-6 space-y-4">
-            <h3 className="text-sm font-bold text-amber-400 uppercase tracking-wider">
-              📜 Catalog Version Rollback History
-            </h3>
-            <div className="space-y-2 text-xs">
-              {versions.length === 0 ? (
-                <p className="text-slate-500 italic">No version history snapshots recorded yet.</p>
               ) : (
-                versions.map((ver) => (
-                  <div key={ver.versionId} className="flex items-center justify-between bg-slate-900/60 p-3 rounded-xl border border-slate-800">
-                    <div>
-                      <span className="font-mono text-slate-200 font-bold block">{ver.versionId}</span>
-                      <span className="text-slate-400">{ver.changeReason} • by {ver.changedBy}</span>
-                      <span className="block text-[10px] text-slate-500">{new Date(ver.timestamp).toLocaleString()}</span>
+                filteredOrders.map((order) => (
+                  <div
+                    key={order.id}
+                    className="bg-white rounded-2xl border border-slate-200 shadow-md p-5 flex flex-col justify-between space-y-4 hover:border-red-300 transition-all"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="font-mono font-black text-slate-900 text-base">#{order.code}</span>
+                          <p className="text-[11px] text-slate-500 font-mono">
+                            {new Date(order.createdAt).toLocaleTimeString()}
+                          </p>
+                        </div>
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider ${order.status === 'CONFIRMED'
+                            ? 'bg-blue-100 text-blue-700'
+                            : order.status === 'PREPARING'
+                              ? 'bg-amber-100 text-amber-700'
+                              : order.status === 'OUT_FOR_DELIVERY'
+                                ? 'bg-purple-100 text-purple-700'
+                                : order.status === 'DELIVERED'
+                                  ? 'bg-emerald-100 text-emerald-700'
+                                  : 'bg-slate-100 text-slate-700'
+                            }`}
+                        >
+                          {order.status}
+                        </span>
+                      </div>
+
+                      {/* Items */}
+                      <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-1 text-xs">
+                        {order.items.map((it, idx) => (
+                          <div key={idx} className="flex justify-between font-medium text-slate-800">
+                            <span>
+                              {it.qty}× {it.presetName}
+                            </span>
+                            <span className="font-mono">{formatNGN(it.totalKobo)}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Address & Phone */}
+                      <div className="text-xs space-y-1 text-slate-600">
+                        <p>
+                          📍 <span className="font-semibold text-slate-900">{order.location.address}</span>
+                        </p>
+                        <p>📱 <span className="font-mono font-bold text-slate-900">{order.phone}</span></p>
+                      </div>
+
+                      <div className="flex justify-between items-center border-t border-slate-100 pt-2 font-mono">
+                        <span className="text-xs text-slate-500">Total</span>
+                        <span className="font-black text-slate-900 text-base">{formatNGN(order.totalKobo)}</span>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => handleRollbackCatalog(ver.versionId)}
-                      className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold rounded-lg border border-amber-500/30"
-                    >
-                      ↺ Rollback to this Version
-                    </button>
+
+                    {/* Order Status Action Controls */}
+                    <div className="border-t border-slate-100 pt-3 flex flex-wrap gap-2">
+                      {order.status === 'PENDING_PAYMENT' && (
+                        <button
+                          onClick={() => updateOrderStatus(order.id, 'CONFIRMED', 'Manual confirmation by Admin')}
+                          className="flex-1 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700"
+                        >
+                          Confirm Order
+                        </button>
+                      )}
+
+                      {(order.status === 'CONFIRMED' || order.status === 'PENDING_PAYMENT') && (
+                        <button
+                          onClick={() => updateOrderStatus(order.id, 'PREPARING')}
+                          className="flex-1 py-2 bg-amber-500 text-slate-950 rounded-xl text-xs font-extrabold hover:bg-amber-400"
+                        >
+                          Start Cooking 🍳
+                        </button>
+                      )}
+
+                      {order.status === 'PREPARING' && (
+                        <button
+                          onClick={() => setAssigningRiderOrder(order)}
+                          className="flex-1 py-2 bg-purple-600 text-white rounded-xl text-xs font-bold hover:bg-purple-700"
+                        >
+                          Dispatch Rider 🛵
+                        </button>
+                      )}
+
+                      {order.status === 'OUT_FOR_DELIVERY' && (
+                        <button
+                          onClick={() => updateOrderStatus(order.id, 'DELIVERED', 'Delivered to customer')}
+                          className="flex-1 py-2 bg-emerald-600 text-white rounded-xl text-xs font-black hover:bg-emerald-700 shadow-md"
+                        >
+                          Mark as Delivered ✅
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => updateOrderStatus(order.id, 'CANCELLED', 'Cancelled by operator')}
+                        className="px-3 py-2 bg-slate-100 text-red-600 rounded-xl text-xs font-bold hover:bg-red-50"
+                      >
+                        Cancel ❌
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* TAB 3: TRANSACTIONS & REFUNDS */}
-      {activeTab === 'payments' && (
-        <div className="glass-panel overflow-hidden">
-          <div className="p-4 bg-slate-900/80 border-b border-slate-800 font-bold text-sm text-white">
-            💳 Flutterwave Payment Transactions & Refunds
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-900/80 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
-                <tr>
-                  <th className="p-3">TxRef</th>
-                  <th className="p-3">Order Code</th>
-                  <th className="p-3">Customer Phone</th>
-                  <th className="p-3">Amount</th>
-                  <th className="p-3">Status</th>
-                  <th className="p-3">Date</th>
-                  <th className="p-3">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60 font-mono">
-                {payments.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-800/40">
-                    <td className="p-3 text-slate-200 text-[11px]">{p.txRef}</td>
-                    <td className="p-3 font-bold text-amber-400">#{p.orderCode}</td>
-                    <td className="p-3 text-slate-300">{p.customerPhone}</td>
-                    <td className="p-3 font-bold text-slate-100">{formatNGN(p.amountKobo)}</td>
-                    <td className="p-3">
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          p.status === 'SUCCESSFUL'
-                            ? 'bg-emerald-500/20 text-emerald-400'
-                            : p.status === 'REFUNDED'
-                            ? 'bg-red-500/20 text-red-400'
-                            : 'bg-amber-500/20 text-amber-400'
-                        }`}
-                      >
-                        {p.status}
-                      </span>
-                    </td>
-                    <td className="p-3 text-slate-500 text-[10px]">
-                      {new Date(p.createdAt).toLocaleString()}
-                    </td>
-                    <td className="p-3">
-                      <button
-                        onClick={() => handleRefundOrder(p.orderCode)}
-                        className="text-red-400 hover:underline font-sans"
-                      >
-                        Refund →
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+        {/* TAB 2: PRODUCTS & MENU CRUD */}
+        {activeTab === 'catalog' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+              <div>
+                <h2 className="text-xl font-black text-slate-900">Product & Menu Catalog</h2>
+                <p className="text-xs text-slate-500">Create, edit, toggle availability, or delete gourmet preset meals</p>
+              </div>
 
-      {/* TAB 4: CUSTOMERS & BLOCKLIST */}
-      {activeTab === 'customers' && (
-        <div className="glass-panel overflow-hidden">
-          <div className="p-4 bg-slate-900/80 border-b border-slate-800 font-bold text-sm text-white flex justify-between items-center">
-            <span>👥 Customer Database & Abusive Phone Restriction</span>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-900/80 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
-                <tr>
-                  <th className="p-3">Name</th>
-                  <th className="p-3">Phone</th>
-                  <th className="p-3">Orders Count</th>
-                  <th className="p-3">Total Spent</th>
-                  <th className="p-3">Restriction Status</th>
-                  <th className="p-3">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60 font-mono">
-                {customers.map((c) => (
-                  <tr key={c.id} className="hover:bg-slate-800/40">
-                    <td className="p-3 font-sans font-bold text-white">{c.name}</td>
-                    <td className="p-3 text-slate-300">{c.phone}</td>
-                    <td className="p-3 text-amber-400 font-bold">{c.orderCount}</td>
-                    <td className="p-3 text-slate-100 font-bold">{formatNGN(c.totalSpentKobo)}</td>
-                    <td className="p-3">
-                      {c.isBlocked ? (
-                        <span className="bg-red-500/20 text-red-400 px-2 py-0.5 rounded font-bold">
-                          BLOCKED
-                        </span>
-                      ) : (
-                        <span className="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-bold">
-                          ACTIVE
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-3">
-                      <button
-                        onClick={() => handleBlockCustomer(c.phone, c.isBlocked)}
-                        className={`font-sans text-xs font-bold px-3 py-1 rounded-lg ${
-                          c.isBlocked
-                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                            : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                        }`}
-                      >
-                        {c.isBlocked ? 'Unblock Phone' : 'Block Phone'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 5: STORE SETTINGS & KILL-SWITCH */}
-      {activeTab === 'settings' && settings && (
-        <div className="glass-panel p-6 space-y-6 max-w-2xl mx-auto">
-          <h2 className="text-lg font-bold text-white border-b border-slate-800 pb-3">
-            ⚙️ System Operations & Delivery Zone Settings
-          </h2>
-
-          <div className="space-y-4 text-xs">
-            <div>
-              <label className="text-slate-300 font-semibold block mb-1">Shop Name</label>
-              <input
-                type="text"
-                value={settings.shopName}
-                onChange={(e) => setSettings({ ...settings, shopName: e.target.value })}
-                className="w-full text-xs bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100"
-              />
+              <button
+                onClick={openAddProductModal}
+                className="btn-crimson px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-md"
+              >
+                <span>➕ Add New Product</span>
+              </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-slate-300 font-semibold block mb-1">Opening Time</label>
-                <input
-                  type="text"
-                  value={settings.operatingHours.open}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      operatingHours: { ...settings.operatingHours, open: e.target.value },
-                    })
-                  }
-                  className="w-full text-xs bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 font-mono"
-                />
+            {/* Products Table / Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {presets.map((preset) => (
+                <div
+                  key={preset.id}
+                  className="bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="relative h-48 w-full bg-slate-100">
+                      <img
+                        src={preset.imageUrl}
+                        alt={preset.name}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=800&auto=format&fit=crop&q=80';
+                        }}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-3 right-3 bg-white/95 px-3 py-1 rounded-xl font-mono font-black text-amber-600 text-sm shadow-md">
+                        {formatNGN(preset.priceKobo)}
+                      </div>
+                    </div>
+
+                    <div className="p-5 space-y-2">
+                      <div className="flex justify-between items-start">
+                        <h3 className="font-extrabold text-slate-900 text-base">{preset.name}</h3>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${preset.isAvailable ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                            }`}
+                        >
+                          {preset.isAvailable ? 'Available' : 'Sold Out'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 line-clamp-2">{preset.description}</p>
+                      <div className="flex flex-wrap gap-1 pt-1">
+                        {preset.components.map((c, i) => (
+                          <span key={i} className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-semibold">
+                            {c}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="p-5 pt-0 border-t border-slate-100 flex gap-2">
+                    <button
+                      onClick={() => handleToggleAvailability(preset)}
+                      className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold"
+                    >
+                      {preset.isAvailable ? 'Set Sold Out' : 'Set Available'}
+                    </button>
+                    <button
+                      onClick={() => openEditProductModal(preset)}
+                      className="px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl text-xs font-bold"
+                    >
+                      ✏️ Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteProduct(preset.id, preset.name)}
+                      className="px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl text-xs font-bold"
+                    >
+                      🗑️ Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: DELIVERED TRACKER */}
+        {activeTab === 'delivered' && (
+          <div className="space-y-6">
+            {/* Delivered Metrics Header */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Total Delivered Meals</span>
+                <span className="text-3xl font-black text-slate-900 font-mono">{deliveredOrders.length}</span>
               </div>
-              <div>
-                <label className="text-slate-300 font-semibold block mb-1">Closing Time</label>
-                <input
-                  type="text"
-                  value={settings.operatingHours.close}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      operatingHours: { ...settings.operatingHours, close: e.target.value },
-                    })
-                  }
-                  className="w-full text-xs bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 font-mono"
-                />
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Total Delivered Revenue</span>
+                <span className="text-3xl font-black text-emerald-600 font-mono">{formatNGN(deliveredRevenue)}</span>
+              </div>
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Delivery Status</span>
+                <span className="text-3xl font-black text-purple-600 font-mono">100% Tracked</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* Delivered Table */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-200 font-black text-slate-900 text-sm">
+                Completed & Delivered Orders Log
+              </div>
+
+              <div className="divide-y divide-slate-100">
+                {deliveredOrders.length === 0 ? (
+                  <div className="p-8 text-center text-slate-500 text-xs">
+                    No delivered orders logged yet. Mark active orders as delivered in the Live Orders tab!
+                  </div>
+                ) : (
+                  deliveredOrders.map((o) => (
+                    <div key={o.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-slate-900">#{o.code}</span>
+                          <span className="bg-emerald-100 text-emerald-700 text-[10px] font-black px-2 py-0.5 rounded-full">
+                            DELIVERED
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600 mt-1">📍 {o.location.address}</p>
+                        <p className="text-[11px] text-slate-400 font-mono">Customer: {o.phone}</p>
+                      </div>
+
+                      <div className="text-right font-mono">
+                        <span className="font-black text-slate-900 text-base block">{formatNGN(o.totalKobo)}</span>
+                        <span className="text-[11px] text-slate-400">
+                          {new Date(o.updatedAt).toLocaleTimeString()}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* MODAL 1: ADD / EDIT PRODUCT */}
+      {isProductModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl p-6 max-w-lg w-full space-y-5 shadow-2xl border border-slate-200 animate-in fade-in duration-200">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+              <h3 className="font-black text-lg text-slate-900">
+                {editingPreset ? '✏️ Edit Meal Product' : '➕ Add New Product'}
+              </h3>
+              <button onClick={() => setIsProductModalOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold">
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProduct} className="space-y-4">
               <div>
-                <label className="text-slate-300 font-semibold block mb-1">
-                  Delivery Max Radius (KM)
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                  Product Name
+                </label>
+                <input
+                  type="text"
+                  value={productName}
+                  onChange={(e) => setProductName(e.target.value)}
+                  placeholder="e.g. Bread + 2 Eggs + Beef Sausage"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-red-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                  Price in ₦ NGN
                 </label>
                 <input
                   type="number"
-                  value={settings.deliveryZone.maxRadiusKm}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      deliveryZone: {
-                        ...settings.deliveryZone,
-                        maxRadiusKm: Number(e.target.value),
-                      },
-                    })
-                  }
-                  className="w-full text-xs bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 font-mono"
+                  step="0.01"
+                  value={productPriceNgn}
+                  onChange={(e) => setProductPriceNgn(e.target.value)}
+                  placeholder="e.g. 1500"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 font-mono focus:outline-none focus:border-red-500"
+                  required
                 />
               </div>
+
               <div>
-                <label className="text-slate-300 font-semibold block mb-1">
-                  Flat Delivery Fee (Kobo)
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={productDesc}
+                  onChange={(e) => setProductDesc(e.target.value)}
+                  placeholder="Gourmet description of ingredients..."
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-red-500"
+                  rows={2}
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                  Components (Comma Separated)
                 </label>
                 <input
-                  type="number"
-                  value={settings.deliveryFee.flatFeeKobo}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      deliveryFee: {
-                        ...settings.deliveryFee,
-                        flatFeeKobo: Number(e.target.value),
-                      },
-                    })
-                  }
-                  className="w-full text-xs bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 font-mono"
+                  type="text"
+                  value={productComponents}
+                  onChange={(e) => setProductComponents(e.target.value)}
+                  placeholder="Artisan Bread, 2 Farm Eggs, Grilled Sausage"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-red-500"
                 />
               </div>
-            </div>
 
-            <button
-              onClick={async () => {
-                const res = await fetch('/api/admin/settings', {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(settings),
-                });
-                if (res.ok) alert('Settings saved successfully!');
-              }}
-              className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs"
-            >
-              Save Store Operations Config
-            </button>
+              <div>
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                  Image URL (Optional)
+                </label>
+                <input
+                  type="url"
+                  value={productImage}
+                  onChange={(e) => setProductImage(e.target.value)}
+                  placeholder="https://images.unsplash.com/..."
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-red-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="availCheck"
+                  checked={productAvailable}
+                  onChange={(e) => setProductAvailable(e.target.checked)}
+                  className="w-4 h-4 text-red-600 rounded focus:ring-red-500"
+                />
+                <label htmlFor="availCheck" className="text-xs font-bold text-slate-700">
+                  Product Available for Ordering
+                </label>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsProductModalOpen(false)}
+                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-crimson flex-1 py-2.5 text-white rounded-xl text-xs font-black shadow-md"
+                >
+                  Save Product
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
 
-      {/* TAB 6: DASHBOARD METRICS */}
-      {activeTab === 'dashboard' && metrics && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="glass-panel p-5 space-y-1">
-            <span className="text-xs text-slate-400 block font-semibold uppercase">Total Revenue</span>
-            <span className="text-2xl font-black text-amber-400 font-mono">
-              {formatNGN(metrics.totalRevenueKobo)}
-            </span>
-          </div>
+      {/* MODAL 2: DISPATCH RIDER */}
+      {assigningRiderOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl border border-slate-200 animate-in fade-in duration-200">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+              <h3 className="font-black text-base text-slate-900">🛵 Assign Delivery Rider</h3>
+              <button onClick={() => setAssigningRiderOrder(null)} className="text-slate-400 hover:text-slate-600 font-bold">
+                ✕
+              </button>
+            </div>
 
-          <div className="glass-panel p-5 space-y-1">
-            <span className="text-xs text-slate-400 block font-semibold uppercase">Today's Revenue</span>
-            <span className="text-2xl font-black text-emerald-400 font-mono">
-              {formatNGN(metrics.todayRevenueKobo)}
-            </span>
-          </div>
+            <form onSubmit={handleAssignRider} className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                  Rider Name
+                </label>
+                <input
+                  type="text"
+                  value={riderName}
+                  onChange={(e) => setRiderName(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-xs text-slate-900"
+                  required
+                />
+              </div>
 
-          <div className="glass-panel p-5 space-y-1">
-            <span className="text-xs text-slate-400 block font-semibold uppercase">Total Orders</span>
-            <span className="text-2xl font-black text-white font-mono">
-              {metrics.totalOrdersCount}
-            </span>
-          </div>
+              <div>
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                  Rider Phone Number
+                </label>
+                <input
+                  type="tel"
+                  value={riderPhone}
+                  onChange={(e) => setRiderPhone(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-xs text-slate-900 font-mono"
+                  required
+                />
+              </div>
 
-          <div className="glass-panel p-5 space-y-1">
-            <span className="text-xs text-slate-400 block font-semibold uppercase">Delivered Meals</span>
-            <span className="text-2xl font-black text-blue-400 font-mono">
-              {metrics.countsByStatus.DELIVERED}
-            </span>
+              <div className="pt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAssigningRiderOrder(null)}
+                  className="flex-1 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 bg-purple-600 text-white rounded-xl text-xs font-bold shadow-md hover:bg-purple-700"
+                >
+                  Confirm & Dispatch
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
