@@ -137,14 +137,14 @@ export default function CartDrawer() {
                 placeholder="Street address or Area (e.g. Plot 124 Wuse 2)"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                className="w-full text-xs bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-red-500"
+                className="w-full text-base sm:text-xs bg-white border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 text-slate-900 focus:outline-none focus:border-red-500"
               />
               <input
                 type="text"
                 placeholder="Landmark (e.g. Opposite KFC Wuse 2)"
                 value={landmark}
                 onChange={(e) => setLandmark(e.target.value)}
-                className="w-full text-xs bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-red-500"
+                className="w-full text-base sm:text-xs bg-white border border-slate-300 rounded-lg px-3 py-2.5 sm:py-2 text-slate-900 focus:outline-none focus:border-red-500"
               />
             </div>
 

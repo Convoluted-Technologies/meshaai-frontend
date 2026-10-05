@@ -38,7 +38,7 @@ export default function CustomerHomePage() {
   return (
     <div className="relative space-y-16 pb-20 bg-white text-slate-900">
       {/* FULL 100VH HERO SECTION (FULL BLEED COVER UNDER ABSOLUTE FLOATING NAV) */}
-      <section className="relative w-full min-h-screen sm:pt-10 pt-30 overflow-hidden flex items-center justify-center bg-slate-950 rounded-b-4xl">
+      <section className="relative w-full min-h-[90vh] sm:min-h-screen pt-24 sm:pt-32 pb-16 overflow-hidden flex items-center justify-center bg-slate-950 rounded-b-3xl sm:rounded-b-4xl">
         {/* Full Bleed Background Image with Zoom Reveal */}
         <div className="absolute inset-0 z-0">
           <img
@@ -47,13 +47,13 @@ export default function CustomerHomePage() {
             className="w-full h-full object-cover object-center animate-bg-reveal"
           />
           {/* Vignette Gradient Overlays */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-black/60" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-black/70" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/50" />
         </div>
 
         {/* Hero Content Container */}
-        <div className="relative z-10 max-w-[85%] w-full mx-auto px-6 lg:px-12 flex flex-col justify-center">
-          <div className="max-w-3xl space-y-6">
+        <div className="relative z-10 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-12 flex flex-col justify-center">
+          <div className="max-w-3xl space-y-5 sm:space-y-6">
             {/* Delivery Serviceability Pill / Status Badge */}
             {/* {deliveryCheck && (
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md border border-white/20 text-xs font-extrabold shadow-lg animate-fade-in">
@@ -144,7 +144,7 @@ export default function CustomerHomePage() {
       </section>
 
       {/* FULL-WIDTH MENU SECTION */}
-      <div id="menu" className="max-w-[85%] mx-auto px-6 lg:px-12 space-y-8 pt-6">
+      <div id="menu" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 pt-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
           <div>
             <h2 className="text-3xl font-black text-slate-900 flex items-center gap-3">

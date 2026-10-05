@@ -490,7 +490,7 @@ export default function AdminStudioPage() {
       {/* Main Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
         {/* Navigation Tabs aligned with PDF Section 3 */}
-        <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-4">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-4 border-b border-slate-200 -mx-4 px-4 sm:mx-0 sm:px-0 flex-nowrap sm:flex-wrap">
           <button
             onClick={() => setActiveTab('orders')}
             className={`px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all ${activeTab === 'orders' ? 'bg-red-600 text-white shadow-md' : 'bg-white text-slate-700 border border-slate-200'
