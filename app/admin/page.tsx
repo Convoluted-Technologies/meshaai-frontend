@@ -409,7 +409,6 @@ export default function AdminStudioPage() {
               🔑
             </div>
             <h1 className="text-2xl font-black tracking-wider uppercase">MESHA-AI OPERATOR STUDIO</h1>
-            <p className="text-xs text-slate-400">PDF Section 3 Compliant Operations & Risk Management</p>
           </div>
 
           <form onSubmit={handleAdminLogin} className="space-y-4">
@@ -470,11 +469,10 @@ export default function AdminStudioPage() {
             {/* Section 3.6 Master Global Kill-Switch Button */}
             <button
               onClick={handleToggleGlobalKillSwitch}
-              className={`px-3.5 py-1.5 rounded-xl font-black text-xs flex items-center gap-2 transition-all ${
-                isOrderingPaused
+              className={`px-3.5 py-1.5 rounded-xl font-black text-xs flex items-center gap-2 transition-all ${isOrderingPaused
                   ? 'bg-red-600 text-white animate-pulse shadow-lg shadow-red-600/50'
                   : 'bg-emerald-950 text-emerald-400 border border-emerald-600/40'
-              }`}
+                }`}
             >
               <span>{isOrderingPaused ? '🔴 MASTER KILL-SWITCH: PAUSED' : '🟢 PLATFORM ACTIVE'}</span>
             </button>
@@ -495,45 +493,40 @@ export default function AdminStudioPage() {
         <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-4">
           <button
             onClick={() => setActiveTab('orders')}
-            className={`px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all ${
-              activeTab === 'orders' ? 'bg-red-600 text-white shadow-md' : 'bg-white text-slate-700 border border-slate-200'
-            }`}
+            className={`px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all ${activeTab === 'orders' ? 'bg-red-600 text-white shadow-md' : 'bg-white text-slate-700 border border-slate-200'
+              }`}
           >
             🚚 Live Orders ({orders.filter((o) => o.status !== 'DELIVERED').length})
           </button>
 
           <button
             onClick={() => setActiveTab('catalog')}
-            className={`px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all ${
-              activeTab === 'catalog' ? 'bg-red-600 text-white shadow-md' : 'bg-white text-slate-700 border border-slate-200'
-            }`}
+            className={`px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all ${activeTab === 'catalog' ? 'bg-red-600 text-white shadow-md' : 'bg-white text-slate-700 border border-slate-200'
+              }`}
           >
             📦 Menu & Availability ({presets.length})
           </button>
 
           <button
             onClick={() => setActiveTab('customers')}
-            className={`px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all ${
-              activeTab === 'customers' ? 'bg-red-600 text-white shadow-md' : 'bg-white text-slate-700 border border-slate-200'
-            }`}
+            className={`px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all ${activeTab === 'customers' ? 'bg-red-600 text-white shadow-md' : 'bg-white text-slate-700 border border-slate-200'
+              }`}
           >
             👥 Customers & Risk ({customers.length})
           </button>
 
           <button
             onClick={() => setActiveTab('kitchens')}
-            className={`px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all ${
-              activeTab === 'kitchens' ? 'bg-red-600 text-white shadow-md' : 'bg-white text-slate-700 border border-slate-200'
-            }`}
+            className={`px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all ${activeTab === 'kitchens' ? 'bg-red-600 text-white shadow-md' : 'bg-white text-slate-700 border border-slate-200'
+              }`}
           >
             🏬 Kitchens & Zones ({kitchens.length})
           </button>
 
           <button
             onClick={() => setActiveTab('fee_rules')}
-            className={`px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all ${
-              activeTab === 'fee_rules' ? 'bg-red-600 text-white shadow-md' : 'bg-white text-slate-700 border border-slate-200'
-            }`}
+            className={`px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all ${activeTab === 'fee_rules' ? 'bg-red-600 text-white shadow-md' : 'bg-white text-slate-700 border border-slate-200'
+              }`}
           >
             💸 Fee Rules ({feeRules.length})
           </button>
@@ -548,9 +541,8 @@ export default function AdminStudioPage() {
                   <button
                     key={st}
                     onClick={() => setStatusFilter(st)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all ${
-                      statusFilter === st ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all ${statusFilter === st ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
                   >
                     {st}
                   </button>
@@ -747,9 +739,8 @@ export default function AdminStudioPage() {
                     <div className="flex items-center gap-2">
                       <span className="font-mono font-extrabold text-slate-900 text-base">{c.phone}</span>
                       <span
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                          c.isBlocked ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
-                        }`}
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${c.isBlocked ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
+                          }`}
                       >
                         {c.isBlocked ? '🚫 BLOCKED' : '✅ ACTIVE'}
                       </span>
@@ -769,9 +760,8 @@ export default function AdminStudioPage() {
                     </button>
                     <button
                       onClick={() => setBlockingCustomer(c)}
-                      className={`px-4 py-2 rounded-xl text-xs font-black text-white ${
-                        c.isBlocked ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700 shadow-md'
-                      }`}
+                      className={`px-4 py-2 rounded-xl text-xs font-black text-white ${c.isBlocked ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700 shadow-md'
+                        }`}
                     >
                       {c.isBlocked ? 'Unblock User' : 'Block Customer 🚫'}
                     </button>
@@ -804,9 +794,8 @@ export default function AdminStudioPage() {
                     </div>
                     <button
                       onClick={() => handleToggleKitchenPause(k)}
-                      className={`px-3 py-1 rounded-full text-xs font-black ${
-                        k.active ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
-                      }`}
+                      className={`px-3 py-1 rounded-full text-xs font-black ${k.active ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                        }`}
                     >
                       {k.active ? '🟢 ACTIVE' : '🔴 PAUSED'}
                     </button>
@@ -893,9 +882,8 @@ export default function AdminStudioPage() {
               </button>
               <button
                 onClick={() => handleToggleBlockCustomer(blockingCustomer)}
-                className={`flex-1 py-2.5 text-white rounded-xl text-xs font-black shadow-md ${
-                  blockingCustomer.isBlocked ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'
-                }`}
+                className={`flex-1 py-2.5 text-white rounded-xl text-xs font-black shadow-md ${blockingCustomer.isBlocked ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'
+                  }`}
               >
                 {blockingCustomer.isBlocked ? 'Unblock Access' : 'Confirm Block 🚫'}
               </button>

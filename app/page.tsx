@@ -55,7 +55,7 @@ export default function CustomerHomePage() {
         <div className="relative z-10 max-w-[85%] w-full mx-auto px-6 lg:px-12 flex flex-col justify-center">
           <div className="max-w-3xl space-y-6">
             {/* Delivery Serviceability Pill / Status Badge */}
-            {deliveryCheck && (
+            {/* {deliveryCheck && (
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md border border-white/20 text-xs font-extrabold shadow-lg animate-fade-in">
                 {deliveryCheck.serviceable && deliveryCheck.mode === 'NOW' && (
                   <span className="bg-emerald-500 text-slate-950 px-3 py-1 rounded-full flex items-center gap-1.5 animate-pulse">
@@ -82,7 +82,7 @@ export default function CustomerHomePage() {
                   📍 Update Location
                 </button>
               </div>
-            )}
+            )} */}
 
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.1] animate-hero-entrance delay-200">
               Elevate Your Taste Buds.
@@ -169,11 +169,10 @@ export default function CustomerHomePage() {
               return (
                 <div
                   key={preset.id}
-                  className={`glass-panel overflow-hidden transition-all border flex flex-col justify-between ${
-                    qty > 0
-                      ? 'border-red-500/60 ring-2 ring-red-500/20 shadow-xl shadow-red-500/10'
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
+                  className={`glass-panel overflow-hidden transition-all border flex flex-col justify-between ${qty > 0
+                    ? 'border-red-500/60 ring-2 ring-red-500/20 shadow-xl shadow-red-500/10'
+                    : 'border-slate-200 hover:border-slate-300'
+                    }`}
                 >
                   <div>
                     {/* Food Image Container */}
