@@ -217,11 +217,132 @@ export interface QuoteResponse {
   zoneMessage?: string;
 }
 
+export interface PriceDto {
+  currency: string;
+  amount: number;
+  formatted: string;
+}
+
+export interface ModifierOption {
+  id: string;
+  name: string;
+  price: PriceDto;
+}
+
+export interface ModifierGroup {
+  id: string;
+  name: string;
+  minSelections: number;
+  maxSelections: number;
+  options: ModifierOption[];
+}
+
+export interface MenuCatalogItem {
+  id: string;
+  name: string;
+  description: string;
+  available: boolean;
+  basePrice: PriceDto;
+  modifierGroups?: ModifierGroup[];
+  imageUrl?: string;
+  components?: string[];
+}
+
+export interface MenuCategory {
+  id: string;
+  name: string;
+  items: MenuCatalogItem[];
+}
+
+export interface CatalogResponse {
+  currency: string;
+  categories?: MenuCategory[];
+  presets?: PresetMeal[];
+}
+
+export interface DeliveryCheckResponse {
+  serviceable: boolean;
+  kitchenId?: number;
+  kitchenName?: string;
+  distanceKm?: number;
+  deliveryFee?: PriceDto;
+  mode?: 'NOW' | 'PRE_ORDER';
+  scheduledFor?: {
+    utc: string;
+    local: string;
+    timezone: string;
+  };
+  ruleApplied?: {
+    ruleId: number;
+    ruleName: string;
+    type: string;
+  };
+  reason?: 'OUT_OF_ZONE' | 'KITCHEN_PAUSED' | 'ORDERING_PAUSED' | string;
+}
+
+export interface AuthTokenResponse {
+  accessToken: string;
+  refreshToken: string;
+  tokenType: string;
+  expiresIn: number;
+  customer?: {
+    id: number | string;
+    phone: string;
+    fullName?: string | null;
+    email?: string | null;
+    isNewCustomer?: boolean;
+  };
+  admin?: {
+    id: number | string;
+    email: string;
+    fullName?: string;
+  };
+}
+
+export interface Kitchen {
+  id: number | string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  timezone: string;
+  openTime: string;
+  closeTime: string;
+  radiusKm: number;
+  operatorName: string;
+  operatorPhone: string;
+  active: boolean;
+  paused?: boolean;
+}
+
+export interface DeliveryFeeRule {
+  id?: number | string;
+  name: string;
+  type: 'DISTANCE_BAND' | 'FREE_WINDOW';
+  priority: number;
+  minDistanceKm?: number;
+  maxDistanceKm?: number;
+  feeAmount: number;
+  currency: string;
+  kitchenId: number | string;
+  windowStart?: string;
+  windowEnd?: string;
+  active?: boolean;
+}
+
+export interface ExchangeRate {
+  currency: string;
+  rateToNgn: number;
+  updatedAt: string;
+}
+
 export interface RFCProblemDetails {
   type: string;
   title: string;
   status: number;
   detail: string;
   instance: string;
+  code?: string;
+  correlationId?: string;
   errors?: Record<string, string[]>;
 }
+

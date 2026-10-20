@@ -62,6 +62,12 @@ export function updatePreset(
   return updatedPreset;
 }
 
+export function deletePreset(id: string, actor = 'ADMIN'): void {
+  const presets = getPresetsFromStore();
+  const filtered = presets.filter((p) => p.id !== id);
+  savePresetsToStore(filtered, actor, `Deleted preset "${id}"`);
+}
+
 export function togglePresetAvailability(
   id: string,
   isAvailable: boolean,
