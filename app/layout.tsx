@@ -1,13 +1,14 @@
-import type { Metadata } from 'next';
-import './globals.css';
-import { CartProvider } from '@/context/CartContext';
-import Navbar from '@/components/Navbar';
-import CartDrawer from '@/components/CartDrawer';
-import FoodCursor from '@/components/FoodCursor';
+import type { Metadata } from "next";
+import "./globals.css";
+import { CartProvider } from "@/context/CartContext";
+// import Navbar from "@/components/Navbar";
+import CartDrawer from "@/components/CartDrawer";
+import FoodCursor from "@/components/FoodCursor";
 
 export const metadata: Metadata = {
-  title: 'Meshaai - Elevate Your Taste Buds | Gourmet Roadside Bread & Eggs',
-  description: 'Order piping hot roadside bread & egg preset meals delivered fast with Flutterwave payment.',
+  title: "Meshaai - Elevate Your Taste Buds | Gourmet Roadside Bread & Eggs",
+  description:
+    "Order piping hot roadside bread & egg preset meals delivered fast with Flutterwave payment.",
 };
 
 export default function RootLayout({
@@ -23,21 +24,22 @@ export default function RootLayout({
           <FoodCursor />
 
           {/* Floating Gourmet Navigation Bar - Fixed Top Overlay */}
-          <div className="fixed top-4 inset-x-0 z-50 pointer-events-auto">
+          {/* <div className="fixed top-4 inset-x-0 z-50 pointer-events-auto">
             <Navbar />
-          </div>
+          </div> */}
 
           {/* Main Page Content */}
-          <main className="flex-1 w-full mx-auto">
-            {children}
-          </main>
+          <main className="flex-1 w-full mx-auto">{children}</main>
 
           {/* Slide-over Cart Drawer */}
           <CartDrawer />
 
           {/* Footer */}
           <footer className="border-t border-slate-200 py-8 px-6 text-center text-xs text-slate-500 bg-slate-50 mt-12">
-            <p>© 2026 Meshaai Gourmet Bread & Egg Dining. NGN Kobo Prices • Flutterwave Secured</p>
+            <p>
+              © 2026 Meshaai Gourmet Bread & Egg Dining. NGN Kobo Prices •
+              Flutterwave Secured
+            </p>
           </footer>
         </CartProvider>
       </body>

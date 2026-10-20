@@ -89,11 +89,10 @@ export default function FoodCursor() {
           left: `${pos.x}px`,
           top: `${pos.y}px`,
         }}
-        className={`absolute -translate-x-1/2 -translate-y-1/2 transition-transform duration-75 flex items-center justify-center select-none ${
-          isHovered ? 'scale-150 rotate-12' : 'scale-100'
-        }`}
+        className={`absolute -translate-x-1/2 -translate-y-1/2 transition-transform duration-75 flex items-center justify-center select-none ${isHovered ? 'scale-150 rotate-12' : 'scale-100'
+          }`}
       >
-        <span className="text-2xl drop-shadow-md filter drop-shadow-orange-500/50 animate-bounce">
+        <span className="text-2xl drop-shadow-md filter drop-shadow-orange-500/50">
           {isHovered ? '🔥' : '🍳'}
         </span>
       </div>

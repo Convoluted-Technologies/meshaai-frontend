@@ -70,7 +70,8 @@ export function calculateOrderQuote(req: QuoteRequest): QuoteResponse {
       throw new Error(`Preset "${preset.name}" is currently sold out / unavailable.`);
     }
 
-    const totalKobo = preset.priceKobo * reqItem.qty;
+    const extrasTotalKobo = (reqItem.extras || []).reduce((s, e) => s + e.priceKobo, 0);
+    const totalKobo = (preset.priceKobo + extrasTotalKobo) * reqItem.qty;
     subtotalKobo += totalKobo;
 
     items.push({
@@ -78,6 +79,8 @@ export function calculateOrderQuote(req: QuoteRequest): QuoteResponse {
       presetName: preset.name,
       unitPriceKobo: preset.priceKobo,
       qty: reqItem.qty,
+      extras: reqItem.extras || [],
+      extrasTotalKobo,
       totalKobo,
     });
   }
@@ -150,6 +153,8 @@ export function createOrder(params: {
     presetName: i.presetName,
     unitPriceKobo: i.unitPriceKobo,
     qty: i.qty,
+    extras: i.extras || [],
+    extrasTotalKobo: i.extrasTotalKobo,
     totalKobo: i.totalKobo,
   }));
 

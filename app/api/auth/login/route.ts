@@ -1,59 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticateAdmin } from '@/lib/auth';
-import { createProblemDetails } from '@/lib/utils/errors';
+import { backendFetch } from '@/lib/backend';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { username, password } = body;
+    // Accept either { email, password } (contract section 4.1) or legacy { username, password }
+    const { email, username, password } = body;
+    const loginId = email || username;
 
-    if (!username || !password) {
-      return createProblemDetails(
-        400,
-        'Missing Credentials',
-        'Username and password are required for admin login.',
-        'https://meshaai.com/errors/missing-credentials',
-        '/api/auth/login'
+    if (!loginId || !password) {
+      return NextResponse.json(
+        { title: 'Missing Credentials', detail: 'Email and password are required for admin login.' },
+        { status: 400 }
       );
     }
 
-    const authResult = authenticateAdmin(username, password);
-    if (!authResult) {
-      return createProblemDetails(
-        401,
-        'Authentication Failed',
-        'Invalid admin credentials.',
-        'https://meshaai.com/errors/invalid-credentials',
-        '/api/auth/login'
+    const res = await backendFetch('/admin/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: loginId, password }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      return NextResponse.json(
+        { title: 'Authentication Failed', detail: data?.message || data?.detail || 'Invalid admin credentials.' },
+        { status: res.status }
       );
     }
 
-    const res = NextResponse.json({
+    // Backend returns AdminAuthResponse: { accessToken, adminId, username, role, ... }
+    const token = data.accessToken || data.token || '';
+
+    const response = NextResponse.json({
       success: true,
       user: {
-        id: authResult.user.id,
-        username: authResult.user.username,
-        email: authResult.user.email,
-        role: authResult.user.role,
+        id: data.adminId || data.id || '',
+        username: data.username || data.email || loginId,
+        email: data.email || loginId,
+        role: data.role || 'ADMIN',
+        token,
       },
-      token: authResult.token,
+      token,
     });
 
     // Set cookie for browser session
-    res.cookies.set('admin_token', authResult.token, {
+    response.cookies.set('admin_token', token, {
       httpOnly: true,
       path: '/',
       maxAge: 86400, // 24 hours
     });
 
-    return res;
+    return response;
   } catch (err: any) {
-    return createProblemDetails(
-      500,
-      'Login Error',
-      err.message || 'Error authenticating user',
-      'https://meshaai.com/errors/login-error',
-      '/api/auth/login'
+    return NextResponse.json(
+      { title: 'Login Error', detail: err.message || 'Error authenticating admin' },
+      { status: 502 }
     );
   }
 }

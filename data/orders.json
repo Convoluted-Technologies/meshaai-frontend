@@ -1,5 +1,118 @@
 [
   {
+    "id": "ord_1792157051417_125fh",
+    "code": "MSH-XZXNU",
+    "phone": "8887868768",
+    "customerId": "cust_1792157033114_y6tf",
+    "items": [
+      {
+        "presetId": "preset-2",
+        "presetName": "Bread + 2 Eggs + Seasoned Fish",
+        "unitPriceKobo": 220000,
+        "qty": 1,
+        "extras": [
+          {
+            "extraId": "ext-2-4",
+            "name": "Extra Loaf of Bread",
+            "priceKobo": 50000
+          }
+        ],
+        "extrasTotalKobo": 50000,
+        "totalKobo": 270000
+      }
+    ],
+    "subtotalKobo": 270000,
+    "deliveryFeeKobo": 50000,
+    "totalKobo": 320000,
+    "location": {
+      "lat": 6.5244,
+      "lng": 3.3792,
+      "address": "jkkg h ",
+      "landmark": "hkjhug hj ",
+      "distanceKm": 0
+    },
+    "note": "h",
+    "status": "PAID",
+    "paymentTxRef": "TX_MSH-XZXNU_1792157051419",
+    "idempotencyKey": "idem_1792157038881_wozki",
+    "deliveryProof": {
+      "code": "4172",
+      "verified": false
+    },
+    "auditTrail": [
+      {
+        "id": "aud_1792157051419",
+        "fromState": "NONE",
+        "toState": "PENDING_PAYMENT",
+        "timestamp": "2026-10-16T13:24:11.418Z",
+        "actor": "CUSTOMER:cust_1792157033114_y6tf",
+        "reason": "Order created"
+      },
+      {
+        "id": "aud_1792157182824_fbz",
+        "fromState": "PENDING_PAYMENT",
+        "toState": "PAID",
+        "timestamp": "2026-10-16T13:26:22.824Z",
+        "actor": "SYSTEM:FLW_WEBHOOK",
+        "reason": "Payment verified successfully"
+      }
+    ],
+    "createdAt": "2026-10-16T13:24:11.418Z",
+    "updatedAt": "2026-10-16T13:26:22.824Z"
+  },
+  {
+    "id": "ord_1792005082074_z8bt0",
+    "code": "MSH-SWAHR",
+    "phone": "08012345678",
+    "items": [
+      {
+        "presetId": "preset-2",
+        "presetName": "Bread + 2 Eggs + Seasoned Fish",
+        "unitPriceKobo": 220000,
+        "qty": 3,
+        "totalKobo": 660000
+      }
+    ],
+    "subtotalKobo": 660000,
+    "deliveryFeeKobo": 50000,
+    "totalKobo": 710000,
+    "location": {
+      "lat": 6.5244,
+      "lng": 3.3792,
+      "address": "12 Commercial Avenue, Yaba, Lagos",
+      "landmark": "Opposite Domino Pizza",
+      "distanceKm": 0
+    },
+    "note": "Extra hot pepper sauce on the side please",
+    "status": "EXPIRED",
+    "paymentTxRef": "TX_MSH-SWAHR_1792005082074",
+    "idempotencyKey": "idem_1792005078270_tx84b",
+    "deliveryProof": {
+      "code": "8096",
+      "verified": false
+    },
+    "auditTrail": [
+      {
+        "id": "aud_1792005082074",
+        "fromState": "NONE",
+        "toState": "PENDING_PAYMENT",
+        "timestamp": "2026-10-14T19:11:22.074Z",
+        "actor": "GUEST:08012345678",
+        "reason": "Order created"
+      },
+      {
+        "id": "aud_1792079840339_ejq",
+        "fromState": "PENDING_PAYMENT",
+        "toState": "EXPIRED",
+        "timestamp": "2026-10-15T15:57:20.339Z",
+        "actor": "SYSTEM:JOB",
+        "reason": "Order expired after 15 minutes of non-payment"
+      }
+    ],
+    "createdAt": "2026-10-14T19:11:22.074Z",
+    "updatedAt": "2026-10-15T15:57:20.339Z"
+  },
+  {
     "id": "ord_1790265529484_i43k6",
     "code": "MSH-6F55S",
     "phone": "08012345678",
@@ -56,7 +169,8 @@
       }
     ],
     "createdAt": "2026-09-24T15:58:49.485Z",
-    "updatedAt": "2026-09-24T15:58:57.211Z"
+    "updatedAt": "2026-10-12T17:45:28.550Z",
+    "customerId": "cust_1791827128546_0lo3"
   },
   {
     "id": "ord_1790251721051_hqo4f",
@@ -107,6 +221,7 @@
       }
     ],
     "createdAt": "2026-09-24T12:08:41.051Z",
-    "updatedAt": "2026-09-24T12:08:41.749Z"
+    "updatedAt": "2026-10-12T17:45:28.555Z",
+    "customerId": "cust_1791827128546_0lo3"
   }
 ]

@@ -8,6 +8,11 @@
       "2 Fried Eggs with Onions & Peppers",
       "Melted Cheddar & Hot Pepper Dip"
     ],
+    "extras": [
+      { "id": "ext-1-1", "name": "Extra Fried Egg", "priceKobo": 30000 },
+      { "id": "ext-1-2", "name": "Extra Loaf of Bread", "priceKobo": 50000 },
+      { "id": "ext-1-3", "name": "Grilled Beef Sausage", "priceKobo": 80000 }
+    ],
     "priceKobo": 150000,
     "imageUrl": "/images/hero_food.png",
     "isAvailable": true,
@@ -23,6 +28,12 @@
       "2 Fried Eggs with Vegetables",
       "1 Seasoned Crispy Fried Fish",
       "Signature Pepper Sauce"
+    ],
+    "extras": [
+      { "id": "ext-2-1", "name": "Extra Fried Egg", "priceKobo": 30000 },
+      { "id": "ext-2-2", "name": "Extra Seasoned Fish", "priceKobo": 120000 },
+      { "id": "ext-2-3", "name": "Grilled Beef Sausage", "priceKobo": 80000 },
+      { "id": "ext-2-4", "name": "Extra Loaf of Bread", "priceKobo": 50000 }
     ],
     "priceKobo": 220000,
     "imageUrl": "/images/preset_fish.png",
@@ -40,6 +51,12 @@
       "1 Grilled Beef Sausage",
       "Spicy Pepper Sauce"
     ],
+    "extras": [
+      { "id": "ext-3-1", "name": "2nd Grilled Sausage (now 2 total)", "priceKobo": 80000 },
+      { "id": "ext-3-2", "name": "Extra Omelette Egg", "priceKobo": 30000 },
+      { "id": "ext-3-3", "name": "Extra Bread Loaf", "priceKobo": 50000 },
+      { "id": "ext-3-4", "name": "Extra Spicy Pepper Sauce", "priceKobo": 15000 }
+    ],
     "priceKobo": 250000,
     "imageUrl": "/images/hero_food.png",
     "isAvailable": true,
@@ -55,6 +72,12 @@
       "4 Fried Eggs with Veggies",
       "2 Grilled Sausages",
       "Double Pepper Dip"
+    ],
+    "extras": [
+      { "id": "ext-4-1", "name": "2 Extra Grilled Sausages (now 4 total)", "priceKobo": 160000 },
+      { "id": "ext-4-2", "name": "2 Extra Fried Eggs (now 6 total)", "priceKobo": 60000 },
+      { "id": "ext-4-3", "name": "Extra Loaf of Bread (now 3 total)", "priceKobo": 50000 },
+      { "id": "ext-4-4", "name": "Jollof Rice Side (small)", "priceKobo": 200000 }
     ],
     "priceKobo": 380000,
     "imageUrl": "/images/preset_fish.png",

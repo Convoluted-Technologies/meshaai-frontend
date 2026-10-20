@@ -1,56 +1,97 @@
-import { NextResponse } from 'next/server';
-import { getOrdersFromStore, getPaymentsFromStore, getRefundsFromStore } from '@/lib/db/store';
+import { NextRequest, NextResponse } from 'next/server';
+import { backendFetch } from '@/lib/backend';
+import { getServerAdminToken } from '@/lib/backend-auth';
 
-export async function GET() {
-  const orders = getOrdersFromStore();
-  const payments = getPaymentsFromStore();
-  const refunds = getRefundsFromStore();
+function getAdminToken(req: NextRequest): string {
+  return (
+    req.cookies.get('admin_token')?.value ||
+    req.headers.get('authorization')?.replace('Bearer ', '') ||
+    ''
+  );
+}
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const todayOrders = orders.filter((o) => o.createdAt.startsWith(todayStr));
+/**
+ * GET /api/admin/dashboard
+ * Contract section 4.1: Admin dashboard metrics.
+ * Proxies directly to GET /api/v1/admin/dashboard.
+ * Falls back to computing metrics from orders if the backend endpoint is not yet live.
+ */
+export async function GET(req: NextRequest) {
+  try {
+    const token = getAdminToken(req) || (await getServerAdminToken()) || '';
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
-  const totalRevenueKobo = orders.reduce((sum, o) => {
-    if (['PAID', 'CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(o.status)) {
-      return sum + o.totalKobo;
+    const res = await backendFetch('/admin/dashboard', { method: 'GET' }, headers);
+    const raw = await res.json();
+
+    if (res.ok) {
+      // Backend may return the metrics object directly or wrapped
+      const metrics = raw.metrics || raw;
+      return NextResponse.json({ success: true, metrics });
     }
-    return sum;
-  }, 0);
 
-  const todayRevenueKobo = todayOrders.reduce((sum, o) => {
-    if (['PAID', 'CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(o.status)) {
-      return sum + o.totalKobo;
+    // 404 means the backend dashboard endpoint isn't implemented yet — fall back
+    // to deriving metrics from the orders list so the admin UI still works.
+    if (res.status === 404 || res.status === 405) {
+      return computeMetricsFromOrders(headers);
     }
-    return sum;
-  }, 0);
+    return NextResponse.json(
+      { success: false, detail: raw?.message || raw?.detail || 'Failed to load dashboard' },
+      { status: res.status }
+    );
+  } catch (err: any) {
+    return NextResponse.json({ success: false, detail: err.message }, { status: 502 });
+  }
+}
 
-  const pendingCount = orders.filter((o) => o.status === 'PENDING_PAYMENT').length;
-  const paidCount = orders.filter((o) => o.status === 'PAID').length;
-  const preparingCount = orders.filter((o) => o.status === 'CONFIRMED' || o.status === 'PREPARING').length;
-  const outForDeliveryCount = orders.filter((o) => o.status === 'OUT_FOR_DELIVERY').length;
-  const deliveredCount = orders.filter((o) => o.status === 'DELIVERED').length;
-  const cancelledCount = orders.filter((o) => o.status === 'CANCELLED').length;
-  const failedCount = orders.filter((o) => o.status === 'FAILED_DELIVERY').length;
-  const refundedCount = orders.filter((o) => o.status === 'REFUNDED').length;
+async function computeMetricsFromOrders(
+  headers: Record<string, string>
+): Promise<NextResponse> {
+  try {
+    const res = await backendFetch('/admin/orders?page=0&size=200', { method: 'GET' }, headers);
+    const raw = await res.json();
+    if (!res.ok) {
+      return NextResponse.json(
+        { success: false, detail: raw?.message || 'Failed to load dashboard' },
+        { status: res.status }
+      );
+    }
 
-  return NextResponse.json({
-    success: true,
-    metrics: {
-      totalOrdersCount: orders.length,
-      todayOrdersCount: todayOrders.length,
-      totalRevenueKobo,
-      todayRevenueKobo,
-      countsByStatus: {
-        PENDING_PAYMENT: pendingCount,
-        PAID: paidCount,
-        PREPARING: preparingCount,
-        OUT_FOR_DELIVERY: outForDeliveryCount,
-        DELIVERED: deliveredCount,
-        CANCELLED: cancelledCount,
-        FAILED_DELIVERY: failedCount,
-        REFUNDED: refundedCount,
+    const orders = raw.content || raw.orders || [];
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayOrders = orders.filter((o: any) => (o.createdAt || '').startsWith(todayStr));
+    const paidStatuses = ['PAID', 'CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED'];
+
+    const totalRevenueKobo = orders
+      .filter((o: any) => paidStatuses.includes(o.status))
+      .reduce((s: number, o: any) => s + (o.total?.amountMinor || 0), 0);
+    const todayRevenueKobo = todayOrders
+      .filter((o: any) => paidStatuses.includes(o.status))
+      .reduce((s: number, o: any) => s + (o.total?.amountMinor || 0), 0);
+
+    const countByStatus = (status: string) =>
+      orders.filter((o: any) => o.status === status).length;
+
+    return NextResponse.json({
+      success: true,
+      metrics: {
+        totalOrdersCount: raw.totalElements || orders.length,
+        todayOrdersCount: todayOrders.length,
+        totalRevenueKobo,
+        todayRevenueKobo,
+        countsByStatus: {
+          PENDING_PAYMENT: countByStatus('PENDING_PAYMENT'),
+          PAID: countByStatus('PAID'),
+          CONFIRMED: countByStatus('CONFIRMED'),
+          PREPARING: countByStatus('PREPARING'),
+          OUT_FOR_DELIVERY: countByStatus('OUT_FOR_DELIVERY'),
+          DELIVERED: countByStatus('DELIVERED'),
+          CANCELLED: countByStatus('CANCELLED'),
+          REFUNDED: countByStatus('REFUNDED'),
+        },
       },
-      refundsCount: refunds.length,
-      paymentsCount: payments.length,
-    },
-  });
+    });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, detail: err.message }, { status: 502 });
+  }
 }

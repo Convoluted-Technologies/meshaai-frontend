@@ -1,41 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCustomersFromStore, getOrdersFromStore, getBlockedPhonesFromStore } from '@/lib/db/store';
+import { backendFetch } from '@/lib/backend';
+import { getServerAdminToken } from '@/lib/backend-auth';
 
+function getAdminToken(req: NextRequest): string {
+  return (
+    req.cookies.get('admin_token')?.value ||
+    req.headers.get('authorization')?.replace('Bearer ', '') ||
+    ''
+  );
+}
+
+/**
+ * GET /api/admin/customers
+ * Contract section 4.2: Paginated customer list.
+ * Proxies to GET /api/v1/admin/customers with optional ?search= and ?page= params.
+ */
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const query = searchParams.get('query')?.toLowerCase();
+  try {
+    const token = getAdminToken(req) || (await getServerAdminToken()) || '';
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-  const customers = getCustomersFromStore();
-  const orders = getOrdersFromStore();
-  const blockedPhones = getBlockedPhonesFromStore();
+    const { searchParams } = new URL(req.url);
+    const search = searchParams.get('search') || '';
+    const page = searchParams.get('page') || '0';
+    const size = searchParams.get('size') || '20';
 
-  const customerStats = customers.map((cust) => {
-    const custOrders = orders.filter((o) => o.phone === cust.phone || o.customerId === cust.id);
-    const totalSpentKobo = custOrders.reduce((sum, o) => (o.status === 'PAID' || o.status === 'DELIVERED' ? sum + o.totalKobo : sum), 0);
-    const isBlocked = blockedPhones.includes(cust.phone.replace(/[^0-9]/g, ''));
+    const query = new URLSearchParams({ page, size });
+    if (search) query.set('search', search);
 
-    return {
-      ...cust,
-      orderCount: custOrders.length,
-      totalSpentKobo,
-      isBlocked,
-    };
-  });
+    const res = await backendFetch(`/admin/customers?${query.toString()}`, { method: 'GET' }, headers);
+    const raw = await res.json();
 
-  let filtered = customerStats;
-  if (query) {
-    filtered = customerStats.filter(
-      (c) =>
-        c.phone.includes(query) ||
-        (c.name && c.name.toLowerCase().includes(query)) ||
-        (c.email && c.email.toLowerCase().includes(query))
-    );
+    if (!res.ok) {
+      return NextResponse.json(
+        { success: false, detail: raw?.message || raw?.detail || 'Failed to load customers' },
+        { status: res.status }
+      );
+    }
+
+    // Backend returns a Spring Page: { content: [...], totalElements, ... }
+    const customers = raw.content || raw.customers || raw || [];
+    return NextResponse.json({
+      success: true,
+      customers,
+      count: raw.totalElements ?? customers.length,
+    });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, detail: err.message }, { status: 502 });
   }
-
-  return NextResponse.json({
-    success: true,
-    customers: filtered,
-    blockedPhones,
-    count: filtered.length,
-  });
 }

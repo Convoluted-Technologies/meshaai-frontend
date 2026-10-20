@@ -1,39 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPaymentsFromStore, findOrderByCodeOrId } from '@/lib/db/store';
-import { createProblemDetails } from '@/lib/utils/errors';
+import { backendFetch } from '@/lib/backend';
+import { getServerAdminToken } from '@/lib/backend-auth';
+
+function getAdminToken(req: NextRequest): string {
+  return req.cookies.get('admin_token')?.value ||
+    req.headers.get('authorization')?.replace('Bearer ', '') || '';
+}
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const txRef = searchParams.get('tx_ref');
+  const code = txRef?.replace(/^TX_/, '').split('_')[0] || txRef || '';
 
-  if (!txRef) {
-    return createProblemDetails(
-      400,
-      'Missing Transaction Reference',
-      'tx_ref query parameter is required',
-      'https://meshaai.com/errors/missing-tx-ref',
-      '/api/payments/status'
-    );
+  if (!code) {
+    return NextResponse.json({ title: 'Missing tx_ref', detail: 'tx_ref query parameter is required' }, { status: 400 });
   }
 
-  const payments = getPaymentsFromStore();
-  const payment = payments.find((p) => p.txRef === txRef);
-  const order = findOrderByCodeOrId(txRef);
+  try {
+    // Use order status endpoint
+    const res = await backendFetch(`/orders/${encodeURIComponent(code)}/status`);
+    const data = await res.json();
 
-  if (!order) {
-    return createProblemDetails(
-      404,
-      'Order Not Found',
-      `No order found for transaction reference ${txRef}`,
-      'https://meshaai.com/errors/order-not-found',
-      '/api/payments/status'
-    );
+    if (!res.ok) {
+      return NextResponse.json({ title: 'Not Found', detail: `No order found for ${code}` }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      payment: null,
+      orderStatus: data.status,
+      orderCode: data.code || code,
+    });
+  } catch (err: any) {
+    return NextResponse.json({ title: 'Error', detail: err.message }, { status: 502 });
   }
-
-  return NextResponse.json({
-    success: true,
-    payment: payment || null,
-    orderStatus: order.status,
-    orderCode: order.code,
-  });
 }

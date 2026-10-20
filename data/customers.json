@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "id": "cust_1791827128546_0lo3",
+    "phone": "08012345678",
+    "name": "Customer 5678",
+    "savedLocations": [],
+    "createdAt": "2026-10-12T17:45:28.546Z",
+    "updatedAt": "2026-10-12T17:45:28.546Z"
+  },
+  {
+    "id": "cust_1792157033114_y6tf",
+    "phone": "8887868768",
+    "name": "Customer 8768",
+    "savedLocations": [],
+    "createdAt": "2026-10-16T13:23:53.114Z",
+    "updatedAt": "2026-10-16T13:23:53.114Z"
+  }
+]

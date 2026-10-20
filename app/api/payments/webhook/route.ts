@@ -1,32 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSecretHash, verifyAndProcessPayment } from '@/lib/payments';
-import { notifyCustomerOrderEvent } from '@/lib/notifications';
-import { broadcastAdminEvent } from '@/lib/events/sse';
+import { backendFetch } from '@/lib/backend';
+
+/**
+ * POST /api/payments/webhook
+ * Contract section 3.2: Inbound Asynchronous Payment Webhook.
+ *
+ * Flutterwave sends a signed JSON payload to this endpoint.
+ * We verify the verif-hash signature, then forward the full payload to the
+ * backend's own webhook endpoint: POST /api/v1/webhooks/flutterwave
+ * The backend handles authoritative verification and idempotent order updates.
+ */
+
+const FLW_SECRET_HASH = process.env.FLW_SECRET_HASH || 'meshaai-secret-hash';
 
 export async function POST(req: NextRequest) {
-  const secretHash = getSecretHash();
   const signature = req.headers.get('verif-hash');
 
-  if (!signature || signature !== secretHash) {
+  if (!signature || signature !== FLW_SECRET_HASH) {
+    console.warn('[webhook] Invalid or missing verif-hash signature');
     return NextResponse.json({ error: 'Unauthorized webhook request' }, { status: 401 });
   }
 
+  let payload: any;
   try {
-    const payload = await req.json();
+    payload = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 });
+  }
 
-    if (payload.event === 'charge.completed' && payload.data) {
-      const { tx_ref, id, amount } = payload.data;
-      const result = await verifyAndProcessPayment(tx_ref, String(id), amount);
+  console.log('[webhook] Received Flutterwave event:', payload?.event);
 
-      if (result.success && result.order) {
-        await notifyCustomerOrderEvent(result.order, 'PAID');
-        broadcastAdminEvent('ORDER_PAID', { order: result.order });
-      }
+  try {
+    // Forward the full webhook payload to the backend (contract section 3.2)
+    // The backend validates the event, calls Flutterwave verify API, and updates order state.
+    const backendRes = await backendFetch('/webhooks/flutterwave', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }, {
+      // Forward the original signature so the backend can re-verify if needed
+      'verif-hash': FLW_SECRET_HASH,
+    });
+
+    if (!backendRes.ok) {
+      const errData = await backendRes.json().catch(() => ({}));
+      console.error('[webhook] Backend webhook forwarding failed:', backendRes.status, errData);
+      // Still return 200 to Flutterwave to prevent retries for non-transient errors
+      return NextResponse.json({ status: 'forwarding_failed', detail: errData?.message }, { status: 200 });
     }
 
-    return NextResponse.json({ status: 'success' });
+    const result = await backendRes.json().catch(() => ({ status: 'success' }));
+    return NextResponse.json({ status: result.status || 'success', message: 'Webhook processed successfully' });
   } catch (err: any) {
-    console.error('Webhook processing error:', err);
-    return NextResponse.json({ status: 'error', message: err.message }, { status: 500 });
+    console.error('[webhook] Processing error:', err);
+    // Return 200 so Flutterwave does not retry on our network errors
+    return NextResponse.json({ status: 'error', message: err.message }, { status: 200 });
   }
 }

@@ -1,11 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  verifyOTP,
-  getOrCreateCustomerByPhone,
-  linkGuestOrdersToCustomer,
-  createAuthToken,
-} from '@/lib/auth';
-import { createProblemDetails } from '@/lib/utils/errors';
+import { backendFetch } from '@/lib/backend';
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,43 +7,38 @@ export async function POST(req: NextRequest) {
     const { phone, otp, name } = body;
 
     if (!phone || !otp) {
-      return createProblemDetails(
-        400,
-        'Invalid Payload',
-        'Phone number and OTP code are required.',
-        'https://meshaai.com/errors/missing-otp-payload',
-        '/api/auth/otp/verify'
+      return NextResponse.json(
+        { title: 'Invalid Payload', detail: 'Phone number and OTP code are required.' },
+        { status: 400 }
       );
     }
 
-    const isValid = verifyOTP(phone, otp);
-    if (!isValid) {
-      return createProblemDetails(
-        401,
-        'Invalid OTP',
-        'The OTP provided is invalid or has expired.',
-        'https://meshaai.com/errors/invalid-otp',
-        '/api/auth/otp/verify'
+    const res = await backendFetch('/auth/otp/verify', {
+      method: 'POST',
+      body: JSON.stringify({ phone, code: otp, name }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      return NextResponse.json(
+        { title: 'Invalid OTP', detail: data?.message || data?.detail || 'The OTP provided is invalid or has expired.' },
+        { status: res.status }
       );
     }
 
-    const customer = getOrCreateCustomerByPhone(phone, name);
-    const linkedCount = linkGuestOrdersToCustomer(phone, customer.id);
-    const token = createAuthToken({ id: customer.id, phone: customer.phone, type: 'CUSTOMER' });
+    // Backend returns AuthTokenResponse: { accessToken, refreshToken, customer? }
+    const token = data.accessToken || data.token || '';
+    const customer = data.customer || { id: data.customerId || '', phone };
 
     return NextResponse.json({
       success: true,
       token,
       customer,
-      linkedOrdersCount: linkedCount,
     });
   } catch (err: any) {
-    return createProblemDetails(
-      400,
-      'OTP Verification Failed',
-      err.message || 'Unable to verify OTP',
-      'https://meshaai.com/errors/otp-verification-failed',
-      '/api/auth/otp/verify'
+    return NextResponse.json(
+      { title: 'OTP Verification Failed', detail: err.message || 'Unable to verify OTP' },
+      { status: 502 }
     );
   }
 }

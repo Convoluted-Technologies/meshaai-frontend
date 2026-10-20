@@ -1,42 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cancelCustomerOrder } from '@/lib/orders';
-import { createProblemDetails } from '@/lib/utils/errors';
-import { broadcastAdminEvent } from '@/lib/events/sse';
+import { backendFetch } from '@/lib/backend';
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
-    const { id } = await params;
     const body = await req.json();
     const { phone, reason } = body;
 
-    if (!phone) {
-      return createProblemDetails(
-        400,
-        'Phone Required',
-        'Phone number is required to verify ownership before cancelling an order.',
-        'https://meshaai.com/errors/missing-phone',
-        `/api/orders/${id}/cancel`
+    const res = await backendFetch(`/orders/${encodeURIComponent(id.toUpperCase())}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify({ phone, reason: reason || 'Customer cancelled from tracking page' }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      return NextResponse.json(
+        { title: 'Cancel Failed', detail: data?.message || data?.detail || 'Failed to cancel order' },
+        { status: res.status }
       );
     }
 
-    const cancelledOrder = cancelCustomerOrder(id, phone, reason || 'Cancelled by customer');
-    broadcastAdminEvent('ORDER_UPDATED', { order: cancelledOrder });
-
+    // Adapt the cancel response to include a minimal order-like shape
     return NextResponse.json({
       success: true,
-      message: 'Order cancelled successfully',
-      order: cancelledOrder,
+      order: {
+        code: data.code || id,
+        status: data.status,
+        message: data.message,
+        refundInitiated: data.refundInitiated,
+      },
     });
   } catch (err: any) {
-    return createProblemDetails(
-      400,
-      'Cancellation Failed',
-      err.message || 'Unable to cancel order',
-      'https://meshaai.com/errors/cancellation-failed',
-      `/api/orders/cancel`
-    );
+    return NextResponse.json({ title: 'Cancel Failed', detail: err.message }, { status: 502 });
   }
 }

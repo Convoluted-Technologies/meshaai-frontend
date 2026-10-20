@@ -1,57 +1,93 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createOrder } from '@/lib/orders';
-import { createProblemDetails } from '@/lib/utils/errors';
-import { broadcastAdminEvent } from '@/lib/events/sse';
-import { logEvent } from '@/lib/utils/logger';
+import { backendFetch, adaptOrder } from '@/lib/backend';
 
 export async function POST(req: NextRequest) {
-  const correlationId = req.headers.get('x-correlation-id') || `corr_${Date.now()}`;
-  const idempotencyKey = req.headers.get('idempotency-key') || req.headers.get('x-idempotency-key') || undefined;
+  const idempotencyKey =
+    req.headers.get('idempotency-key') ||
+    req.headers.get('Idempotency-Key') ||
+    req.headers.get('x-idempotency-key') ||
+    `idem_${Date.now()}`;
+
+  const authHeader = req.headers.get('authorization') || '';
 
   try {
     const body = await req.json();
-    const { phone, items, location, note, customerId } = body;
+    const { phone, name, items, location, note, quoteId: providedQuoteId } = body;
 
     if (!phone || !items || !Array.isArray(items) || items.length === 0 || !location) {
-      return createProblemDetails(
-        400,
-        'Invalid Order Request',
-        'Phone, items array, and delivery location are required.',
-        'https://meshaai.com/errors/invalid-order-payload',
-        '/api/orders'
+      return NextResponse.json(
+        { title: 'Invalid Order Request', detail: 'Phone, items array, and delivery location are required.' },
+        { status: 400 }
       );
     }
 
-    const order = createOrder({
+    // ── Step 1: get a fresh quoteId from backend if not already provided ──
+    let quoteId = providedQuoteId;
+    if (!quoteId) {
+      const lines = items.map((item: any) => ({
+        presetId: item.presetId,
+        qty: item.qty,
+        modifiers: (item.extras || [])
+          .map((e: any) => ({ modifierId: e.extraId || e.id, qty: 1 }))
+          .filter((m: any) => m.modifierId),
+      }));
+
+      const quoteRes = await backendFetch('/orders/quote', {
+        method: 'POST',
+        body: JSON.stringify({
+          lines,
+          latitude: location.lat,
+          longitude: location.lng,
+        }),
+      });
+
+      const quoteData = await quoteRes.json();
+      if (!quoteRes.ok) {
+        return NextResponse.json(
+          { title: 'Quote Failed', detail: quoteData?.message || quoteData?.detail || 'Could not get delivery quote' },
+          { status: quoteRes.status }
+        );
+      }
+      quoteId = quoteData.quoteId;
+    }
+
+    // ── Step 2: create the order ──────────────────────────────────────────
+    const orderBody = {
+      quoteId,
+      name: name || `Customer ${String(phone).slice(-4)}`,
       phone,
-      items,
-      location,
-      note,
-      customerId,
-      idempotencyKey,
-    });
+      location: location.address || `${location.lat},${location.lng}`,
+      landmark: location.landmark || '',
+      note: note || '',
+    };
 
-    logEvent('INFO', 'ORDER_CREATED', { orderCode: order.code, phone: order.phone, totalKobo: order.totalKobo }, correlationId);
+    const extraHeaders: Record<string, string> = { 'Idempotency-Key': idempotencyKey };
+    if (authHeader) extraHeaders['Authorization'] = authHeader;
 
-    // Broadcast event to admin SSE dashboard
-    broadcastAdminEvent('NEW_ORDER', { order });
+    const orderRes = await backendFetch('/orders', {
+      method: 'POST',
+      body: JSON.stringify(orderBody),
+    }, extraHeaders);
 
+    const orderData = await orderRes.json();
+
+    if (!orderRes.ok) {
+      return NextResponse.json(
+        { title: 'Order Creation Failed', detail: orderData?.message || orderData?.detail || 'Unable to process order creation' },
+        { status: orderRes.status }
+      );
+    }
+
+    const order = adaptOrder(orderData);
     return NextResponse.json(
-      {
-        success: true,
-        message: 'Order created successfully. Please proceed to payment.',
-        order,
-      },
+      { success: true, message: 'Order created successfully. Please proceed to payment.', order },
       { status: 201 }
     );
   } catch (err: any) {
-    logEvent('ERROR', 'ORDER_CREATION_FAILED', { error: err.message }, correlationId);
-    return createProblemDetails(
-      400,
-      'Order Creation Failed',
-      err.message || 'Unable to process order creation',
-      'https://meshaai.com/errors/order-creation-failed',
-      '/api/orders'
+    console.error('[orders POST] error:', err);
+    return NextResponse.json(
+      { title: 'Order Creation Failed', detail: err.message || 'Unable to process order creation' },
+      { status: 502 }
     );
   }
 }

@@ -12,11 +12,24 @@ export type OrderStatus =
 
 export type AdminRole = 'SUPER_ADMIN' | 'OPS';
 
+export interface PresetExtra {
+  id: string;
+  name: string;
+  priceKobo: number;
+}
+
+export interface SelectedExtra {
+  extraId: string;
+  name: string;
+  priceKobo: number;
+}
+
 export interface PresetMeal {
   id: string;
   name: string;
   description: string;
   components: string[];
+  extras?: PresetExtra[];
   priceKobo: number;
   imageUrl: string;
   isAvailable: boolean;
@@ -37,6 +50,8 @@ export interface OrderItem {
   presetName: string;
   unitPriceKobo: number;
   qty: number;
+  extras?: SelectedExtra[];
+  extrasTotalKobo: number;
   totalKobo: number;
 }
 
@@ -173,6 +188,7 @@ export interface SystemSettings {
 export interface QuoteRequestItem {
   presetId: string;
   qty: number;
+  extras?: SelectedExtra[];
 }
 
 export interface QuoteRequest {
@@ -189,6 +205,8 @@ export interface QuoteResponse {
     presetName: string;
     unitPriceKobo: number;
     qty: number;
+    extras?: SelectedExtra[];
+    extrasTotalKobo: number;
     totalKobo: number;
   }>;
   subtotalKobo: number;

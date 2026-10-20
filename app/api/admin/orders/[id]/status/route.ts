@@ -1,49 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { transitionOrderStatus } from '@/lib/orders';
-import { createProblemDetails } from '@/lib/utils/errors';
-import { broadcastAdminEvent } from '@/lib/events/sse';
-import { notifyCustomerOrderEvent } from '@/lib/notifications';
+import { backendFetch, adaptOrder } from '@/lib/backend';
+import { getServerAdminToken } from '@/lib/backend-auth';
 
-export async function PATCH(
+function getAdminToken(req: NextRequest): string {
+  return req.cookies.get('admin_token')?.value ||
+    req.headers.get('authorization')?.replace('Bearer ', '') || '';
+}
+
+function authHeaders(token: string): Record<string, string> {
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
-    const { id } = await params;
+    const token = getAdminToken(req) || (await getServerAdminToken()) || '';
     const body = await req.json();
-    const { status, actor = 'ADMIN:OPS', reason = 'Admin status update' } = body;
+    const { status: targetStatus, reason = 'Admin status update' } = body;
 
-    if (!status) {
-      return createProblemDetails(
-        400,
-        'Missing Target Status',
-        'Target order status is required.',
-        'https://meshaai.com/errors/missing-status',
-        `/api/admin/orders/${id}/status`
-      );
+    const res = await backendFetch(`/admin/orders/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status: targetStatus, reason }),
+    }, authHeaders(token));
+    const raw = await res.json();
+    if (!res.ok) {
+      return NextResponse.json({ success: false, detail: raw?.message || 'Failed to update status' }, { status: res.status });
     }
-
-    const updatedOrder = transitionOrderStatus(id, status, actor, reason);
-
-    // Notify customer on key events
-    if (['OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'].includes(status)) {
-      await notifyCustomerOrderEvent(updatedOrder, status as any);
-    }
-
-    broadcastAdminEvent('ORDER_UPDATED', { order: updatedOrder });
-
-    return NextResponse.json({
-      success: true,
-      message: `Order status updated to ${status}`,
-      order: updatedOrder,
-    });
+    return NextResponse.json({ success: true, order: adaptOrder(raw) });
   } catch (err: any) {
-    return createProblemDetails(
-      400,
-      'Status Transition Failed',
-      err.message || 'Unable to update order status',
-      'https://meshaai.com/errors/status-transition-failed',
-      `/api/admin/orders/status`
-    );
+    return NextResponse.json({ success: false, detail: err.message }, { status: 502 });
   }
 }

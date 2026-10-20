@@ -1,5 +1,31 @@
 [
   {
+    "id": "pay_1792157064724",
+    "txRef": "TX_MSH-XZXNU_1792157051419",
+    "orderCode": "MSH-XZXNU",
+    "amountKobo": 320000,
+    "currency": "NGN",
+    "status": "SUCCESSFUL",
+    "customerPhone": "8887868768",
+    "checkoutUrl": "http://localhost:3000/checkout/mock?tx_ref=TX_MSH-XZXNU_1792157051419&amount=3200&code=MSH-XZXNU",
+    "createdAt": "2026-10-16T13:24:24.724Z",
+    "updatedAt": "2026-10-16T13:26:22.815Z",
+    "flwRef": "flw_mock_1792157182814",
+    "paidAt": "2026-10-16T13:26:22.815Z"
+  },
+  {
+    "id": "pay_1792005086773",
+    "txRef": "TX_MSH-SWAHR_1792005082074",
+    "orderCode": "MSH-SWAHR",
+    "amountKobo": 710000,
+    "currency": "NGN",
+    "status": "INITIATED",
+    "customerPhone": "08012345678",
+    "checkoutUrl": "http://localhost:3000/checkout/mock?tx_ref=TX_MSH-SWAHR_1792005082074&amount=7100&code=MSH-SWAHR",
+    "createdAt": "2026-10-14T19:11:26.773Z",
+    "updatedAt": "2026-10-14T19:11:26.773Z"
+  },
+  {
     "id": "pay_1790265529771",
     "txRef": "TX_MSH-6F55S_1790265529485",
     "orderCode": "MSH-6F55S",

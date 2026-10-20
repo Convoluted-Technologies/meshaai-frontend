@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateOTP } from '@/lib/auth';
-import { createProblemDetails } from '@/lib/utils/errors';
-import { logEvent } from '@/lib/utils/logger';
+import { backendFetch } from '@/lib/backend';
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,31 +7,35 @@ export async function POST(req: NextRequest) {
     const { phone } = body;
 
     if (!phone) {
-      return createProblemDetails(
-        400,
-        'Phone Required',
-        'Phone number is required to request OTP',
-        'https://meshaai.com/errors/missing-phone',
-        '/api/auth/otp/request'
+      return NextResponse.json(
+        { title: 'Phone Required', detail: 'Phone number is required to request OTP' },
+        { status: 400 }
       );
     }
 
-    const otp = generateOTP(phone);
-    logEvent('INFO', 'OTP_GENERATED', { phone, otp });
+    const res = await backendFetch('/auth/otp/request', {
+      method: 'POST',
+      body: JSON.stringify({ phone }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      return NextResponse.json(
+        { title: 'OTP Request Failed', detail: data?.message || data?.detail || 'Failed to send OTP' },
+        { status: res.status }
+      );
+    }
 
     return NextResponse.json({
       success: true,
       message: 'OTP sent successfully to phone.',
-      // For easy demo testing, returning otp hint when in local env
-      ...(process.env.NODE_ENV !== 'production' ? { devOtp: otp } : {}),
+      // Pass through devOtp if backend returns it in non-production
+      ...(data.devOtp ? { devOtp: data.devOtp } : {}),
     });
   } catch (err: any) {
-    return createProblemDetails(
-      400,
-      'OTP Request Failed',
-      err.message || 'Failed to send OTP',
-      'https://meshaai.com/errors/otp-failed',
-      '/api/auth/otp/request'
+    return NextResponse.json(
+      { title: 'OTP Request Failed', detail: err.message || 'Failed to send OTP' },
+      { status: 502 }
     );
   }
 }
