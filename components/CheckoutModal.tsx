@@ -144,6 +144,20 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
     setLandmark(landmark);
     setNote(note);
 
+    // ── Resolve coordinates ────────────────────────────────
+    // If the user typed a custom address without clicking a quick-zone button,
+    // lat/lng will still be 0. Fall back to central Lagos so the backend can
+    // at least attempt the quote rather than failing with OUT_OF_ZONE immediately.
+    let resolvedLat = lat;
+    let resolvedLng = lng;
+    if (!resolvedLat || !resolvedLng) {
+      // Central Lagos default — backend will validate delivery zone from address text
+      resolvedLat = 6.5244;
+      resolvedLng = 3.3792;
+      setLat(resolvedLat);
+      setLng(resolvedLng);
+    }
+
     const items = Object.entries(cart)
       .filter(([_, l]) => l.qty > 0)
       .map(([presetId, l]) => ({ presetId, qty: l.qty, extras: l.extras }));
@@ -160,10 +174,11 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
         method: 'POST',
         headers,
         body: JSON.stringify({
+          name,
           phone,
           customerId: savedCustomerId || undefined,
           items,
-          location: { lat, lng, address, landmark },
+          location: { lat: resolvedLat, lng: resolvedLng, address, landmark },
           note,
         }),
       });
