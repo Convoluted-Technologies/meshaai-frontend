@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
 
       if (isReal) {
         // Already a backend modifier — update price then link
-        const upd = { name: String(extra.name).trim(), unitPrice };
+        const upd = { name: String(extra.name).trim().slice(0, 120), unitPrice: Math.round(unitPrice) };
         const r = await backendFetch(`/admin/modifiers/${extra.id}`, { method: 'PUT', body: JSON.stringify(upd) }, h);
         const raw = await r.json().catch(() => ({}));
         console.log(`[catalog POST] PUT modifier ${extra.id} → ${r.status}:`, JSON.stringify(raw));
@@ -113,9 +113,15 @@ export async function POST(req: NextRequest) {
       // Build a unique id: slug + timestamp suffix
       const baseSlug = toSlug(extra.name);
       const modId = `${baseSlug}-${Date.now().toString(36)}`;
-      const mb = { id: modId, name: String(extra.name).trim(), unitPrice };
-      console.log(`[catalog POST] POST modifier:`, JSON.stringify(mb));
-      const r = await backendFetch('/admin/modifiers', { method: 'POST', body: JSON.stringify(mb) }, h);
+      // Ensure unitPrice is a strict integer — Spring Boot rejects floats for int64 fields
+      const mb = {
+        id: modId,
+        name: String(extra.name).trim().slice(0, 120),
+        unitPrice: Math.round(unitPrice),
+      };
+      const mbJson = JSON.stringify(mb);
+      console.log(`[catalog POST] POST modifier body JSON:`, mbJson);
+      const r = await backendFetch('/admin/modifiers', { method: 'POST', body: mbJson }, h);
       const raw = await r.json().catch(() => ({}));
       console.log(`[catalog POST] modifier ${modId} → ${r.status}:`, JSON.stringify(raw));
       if (r.ok) {
@@ -192,7 +198,7 @@ export async function PUT(req: NextRequest) {
 
       if (isReal) {
         // Existing modifier — update then link
-        const upd = { name: String(extra.name).trim(), unitPrice };
+        const upd = { name: String(extra.name).trim().slice(0, 120), unitPrice: Math.round(unitPrice) };
         const r = await backendFetch(`/admin/modifiers/${extra.id}`, { method: 'PUT', body: JSON.stringify(upd) }, h);
         const raw = await r.json().catch(() => ({}));
         console.log(`[catalog PUT] PUT modifier ${extra.id} → ${r.status}:`, JSON.stringify(raw));
@@ -203,9 +209,14 @@ export async function PUT(req: NextRequest) {
       // New extra — create with unique id
       const baseSlug = toSlug(extra.name);
       const modId = `${baseSlug}-${Date.now().toString(36)}`;
-      const mb = { id: modId, name: String(extra.name).trim(), unitPrice };
-      console.log(`[catalog PUT] POST modifier:`, JSON.stringify(mb));
-      const r = await backendFetch('/admin/modifiers', { method: 'POST', body: JSON.stringify(mb) }, h);
+      const mb = {
+        id: modId,
+        name: String(extra.name).trim().slice(0, 120),
+        unitPrice: Math.round(unitPrice),
+      };
+      const mbJson = JSON.stringify(mb);
+      console.log(`[catalog PUT] POST modifier body JSON:`, mbJson);
+      const r = await backendFetch('/admin/modifiers', { method: 'POST', body: mbJson }, h);
       const raw = await r.json().catch(() => ({}));
       console.log(`[catalog PUT] modifier ${modId} → ${r.status}:`, JSON.stringify(raw));
       if (r.ok) {
