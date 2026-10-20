@@ -25,7 +25,7 @@ export default function CustomerHomePage() {
         <Navbar />
       </div>
       {/* FULL 100VH HERO SECTION (FULL BLEED COVER UNDER ABSOLUTE FLOATING NAV) */}
-      <section className="relative w-full min-h-screen sm:pt-10 pt-30 overflow-hidden flex items-center justify-center bg-slate-950 rounded-b-4xl">
+      <section className="relative w-full min-h-screen overflow-hidden flex items-center justify-center bg-slate-950 rounded-b-3xl">
         {/* Full Bleed Background Image with Zoom Reveal */}
         <div className="absolute inset-0 z-0">
           <img
@@ -38,23 +38,23 @@ export default function CustomerHomePage() {
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
         </div>
 
-        {/* Hero Content Container with Staggered Entrance Animations */}
-        <div className="relative z-10 max-w-[85%] w-full mx-auto px-6 lg:px-12 flex flex-col justify-center">
-          <div className="max-w-3xl space-y-6">
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.1] animate-hero-entrance delay-200">
+        {/* Hero Content */}
+        <div className="relative z-10 w-full mx-auto px-6 sm:px-10 lg:px-16 flex flex-col justify-center pt-28 pb-16 sm:pt-32 sm:pb-20">
+          <div className="max-w-3xl space-y-5 sm:space-y-6">
+            <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black tracking-tight text-white leading-[1.1]">
               Elevate Your Taste Buds.
             </h1>
 
-            <p className="text-white text-base sm:text-xl font-medium leading-relaxed max-w-2xl drop-shadow-md animate-hero-entrance delay-300">
+            <p className="text-white text-sm sm:text-lg font-medium leading-relaxed max-w-xl drop-shadow-md">
               Indulge in expertly fried eggs with diced sweet peppers, melted
-              cheddar & sizzling beef sausages, served piping hot inside soft,
+              cheddar &amp; sizzling beef sausages, served piping hot inside soft,
               pillow-fresh warm bread.
             </p>
 
-            <div className="flex flex-wrap items-center gap-4 pt-4 animate-hero-entrance delay-400">
+            <div className="flex flex-wrap items-center gap-3 pt-2">
               <button
                 onClick={() => setIsCartOpen(true)}
-                className="btn-crimson px-8 py-4 rounded-xl font-extrabold text-sm uppercase tracking-wider flex items-center gap-2 text-white shadow-xl shadow-red-600/40"
+                className="btn-crimson px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl font-extrabold text-sm uppercase tracking-wider flex items-center gap-2 text-white shadow-xl shadow-red-600/40"
               >
                 <span>Order Hot Meal Now</span>
                 <span>→</span>
@@ -62,27 +62,11 @@ export default function CustomerHomePage() {
 
               <a
                 href="#menu"
-                className="px-6 py-4 rounded-xl bg-slate-900/80 border border-slate-700 hover:border-slate-500 text-white font-bold text-sm transition-all backdrop-blur-md"
+                className="px-5 sm:px-6 py-3.5 sm:py-4 rounded-xl bg-slate-900/80 border border-slate-700 hover:border-slate-500 text-white font-bold text-sm transition-all backdrop-blur-md"
               >
                 Explore Menu ↓
               </a>
             </div>
-
-            {/* Appetizing Highlights */}
-            {/* <div className="flex flex-wrap items-center sm:gap-8 gap-4 pt-8 border-t border-white/40 text-xs sm:text-sm text-white animate-hero-entrance delay-500">
-              <div className="flex items-center gap-2 font-bold">
-                <span className="text-red-500 text-lg">🔥</span>
-                <span>Freshly Fried in 5 Mins</span>
-              </div>
-              <div className="flex items-center gap-2 font-bold">
-                <span className="text-amber-400 text-lg">🍳</span>
-                <span>Free-Range Eggs & Cheese</span>
-              </div>
-              <div className="flex items-center gap-2 font-bold">
-                <span className="text-orange-400 text-lg">🚚</span>
-                <span>20-Min Doorstep Delivery</span>
-              </div>
-            </div> */}
           </div>
         </div>
       </section>
@@ -90,15 +74,15 @@ export default function CustomerHomePage() {
       {/* FULL-WIDTH MENU SECTION */}
       <div
         id="menu"
-        className="max-w-[85%] mx-auto px-6 lg:px-12 space-y-8 pt-6"
+        className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 space-y-6 pt-4"
       >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-5">
           <div>
-            <h2 className="text-3xl font-black text-slate-900 flex items-center gap-3">
-              <span>🍳 Signature Specials Menu</span>
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900">
+              🍳 Signature Specials
             </h2>
             <p className="text-sm text-slate-500 mt-1">
-              Click any dish to view details, add extras, and add to cart.
+              Tap any dish to view, customise, and add to cart.
             </p>
           </div>
         </div>
@@ -138,7 +122,7 @@ export default function CustomerHomePage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {presets.map((preset) => {
               const lineItem = cart[preset.id];
               const inCart = lineItem && lineItem.qty > 0;
@@ -153,69 +137,54 @@ export default function CustomerHomePage() {
                       : "border-slate-200 hover:border-red-300 hover:shadow-lg hover:shadow-red-500/10"
                   }`}
                 >
-                  <div>
-                    {/* Food Image Container */}
-                    <div className="relative h-52 lg:h-64 w-full overflow-hidden bg-slate-100">
-                      <img
-                        src={preset.imageUrl}
-                        alt={preset.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-md px-3 py-1 rounded-xl border border-red-200 font-black text-amber-600 text-sm shadow-md">
-                        {formatNGN(preset.priceKobo)}
-                      </div>
-                      {!preset.isAvailable && (
-                        <div className="absolute inset-0 bg-white/85 flex items-center justify-center font-extrabold text-red-600 uppercase tracking-widest text-xs">
-                          Sold Out
-                        </div>
-                      )}
-                      {/* In-cart badge */}
-                      {inCart && (
-                        <div className="absolute top-3 left-3 bg-red-600 text-white text-[11px] font-black px-2.5 py-1 rounded-xl shadow-md">
-                          {lineItem.qty} in cart
-                        </div>
-                      )}
+                  {/* Food Image */}
+                  <div className="relative h-44 sm:h-52 lg:h-56 w-full overflow-hidden bg-slate-100">
+                    <img
+                      src={preset.imageUrl}
+                      alt={preset.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-xl border border-red-200 font-black text-amber-600 text-sm shadow-md">
+                      {formatNGN(preset.priceKobo)}
                     </div>
-
-                    <div className="p-5 space-y-3">
-                      <div>
-                        <h3 className="font-extrabold text-slate-900 text-base leading-snug">
-                          {preset.name}
-                        </h3>
-                        <p className="text-xs text-slate-500 line-clamp-2 mt-1">
-                          {preset.description}
-                        </p>
+                    {!preset.isAvailable && (
+                      <div className="absolute inset-0 bg-white/85 flex items-center justify-center font-extrabold text-red-600 uppercase tracking-widest text-xs">
+                        Sold Out
                       </div>
-
-                      {/* Components tags */}
-                      <div className="flex flex-wrap gap-1.5">
-                        {preset.components.map((c, i) => (
-                          <span
-                            key={i}
-                            className="text-[11px] bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg border border-slate-200 font-semibold"
-                          >
-                            {c}
-                          </span>
-                        ))}
+                    )}
+                    {inCart && (
+                      <div className="absolute top-3 left-3 bg-red-600 text-white text-[11px] font-black px-2.5 py-1 rounded-xl shadow-md">
+                        {lineItem.qty} in cart
                       </div>
-
-                      {/* Extras indicator */}
-                      {preset.extras && preset.extras.length > 0 && (
-                        <p className="text-[11px] text-red-500 font-semibold">
-                          + {preset.extras.length} optional extra{preset.extras.length !== 1 ? 's' : ''} available
-                        </p>
-                      )}
-                    </div>
+                    )}
                   </div>
 
-                  {/* CTA Footer */}
-                  <div className="px-5 pb-5 mt-auto">
-                    <div className={`w-full py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider text-center transition-all ${
+                  <div className="p-4 space-y-2.5 flex-1 flex flex-col">
+                    <div>
+                      <h3 className="font-extrabold text-slate-900 text-sm sm:text-base leading-snug">{preset.name}</h3>
+                      <p className="text-xs text-slate-500 line-clamp-2 mt-1">{preset.description}</p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {preset.components.map((c, i) => (
+                        <span key={i} className="text-[11px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-lg border border-slate-200 font-semibold">
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+
+                    {preset.extras && preset.extras.length > 0 && (
+                      <p className="text-[11px] text-red-500 font-semibold">
+                        + {preset.extras.length} optional extra{preset.extras.length !== 1 ? 's' : ''} available
+                      </p>
+                    )}
+
+                    <div className={`mt-auto py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider text-center transition-all ${
                       inCart
                         ? 'bg-red-600 text-white'
                         : 'bg-slate-100 text-slate-600 group-hover:bg-red-600 group-hover:text-white'
                     }`}>
-                      {inCart ? `✓ In Cart — Tap to Edit` : 'Tap to Customise & Order'}
+                      {inCart ? '✓ In Cart — Tap to Edit' : 'Tap to Customise & Order'}
                     </div>
                   </div>
                 </button>

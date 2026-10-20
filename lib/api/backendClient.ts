@@ -1,7 +1,7 @@
 import { RFCProblemDetails } from '@/lib/types';
 
 export const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || 'https://meshaai-mainframe.onrender.com';
+  process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || 'https://meshaai-mainframe-744177391644.europe-west1.run.app';
 
 const ACCESS_TOKEN_KEY = 'meshaai_access_token';
 const REFRESH_TOKEN_KEY = 'meshaai_refresh_token';

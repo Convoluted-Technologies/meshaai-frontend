@@ -120,20 +120,43 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const requestLocation = useCallback(() => {
     if (!navigator.geolocation) {
       setLocationStatus('unavailable');
-      // Fall back to Lagos centre so quote can still run
       setLat(DEFAULT_LAT);
       setLng(DEFAULT_LNG);
       return;
     }
     setLocationStatus('requesting');
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLat(pos.coords.latitude);
-        setLng(pos.coords.longitude);
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setLat(latitude);
+        setLng(longitude);
         setLocationStatus('granted');
+
+        // Run a quick serviceability check so user sees zone status immediately
+        try {
+          const res = await fetch('/api/delivery/check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ latitude, longitude }),
+          });
+          const data = await res.json();
+          if (res.ok && data.serviceable === false) {
+            const reason = data.reason || 'OUT_OF_ZONE';
+            if (reason === 'OUT_OF_ZONE') {
+              setLocationStatus('out_of_zone');
+              setQuoteError("We don't deliver to your GPS location yet. You can still order — enter your address in checkout.");
+            } else if (reason === 'KITCHEN_PAUSED') {
+              setQuoteError('The kitchen near you is temporarily paused. Please check back shortly.');
+            } else if (reason === 'ORDERING_PAUSED') {
+              setQuoteError('Ordering is temporarily closed. Please check back soon.');
+            }
+          }
+          // If serviceable, let the quote effect handle it normally
+        } catch {
+          // Delivery check failing is non-blocking — quote effect will handle errors
+        }
       },
       () => {
-        // Denied or error — fall back to Lagos centre
         setLocationStatus('denied');
         setLat(DEFAULT_LAT);
         setLng(DEFAULT_LNG);

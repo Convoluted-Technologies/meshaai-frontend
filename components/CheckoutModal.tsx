@@ -202,6 +202,15 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
         customerId: savedCustomerId || createdOrder.customerId || '',
       });
 
+      // Auto-save delivery address to account if authenticated
+      if (savedToken && address) {
+        fetch('/api/me/locations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${savedToken}` },
+          body: JSON.stringify({ address, landmark, latitude: resolvedLat, longitude: resolvedLng }),
+        }).catch(() => {}); // non-blocking, ignore errors
+      }
+
       // Initialise Flutterwave payment
       const payRes = await fetch('/api/payments/initialize', {
         method: 'POST',
@@ -229,12 +238,12 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm animate-fadeIn"
+        className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm"
         onClick={!isFormLocked ? onClose : undefined}
       />
 
       {/* Modal */}
-      <div className="fixed inset-x-0 bottom-0 z-50 max-h-[92vh] overflow-y-auto rounded-t-3xl bg-white shadow-2xl animate-slideUp md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg md:rounded-3xl md:max-h-[88vh]">
+      <div className="fixed inset-x-0 bottom-0 z-[70] max-h-[94vh] overflow-y-auto rounded-t-3xl bg-white shadow-2xl md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg md:rounded-3xl md:max-h-[90vh]">
         {/* Header */}
         <div className="sticky top-0 bg-white/95 backdrop-blur-md px-6 pt-6 pb-4 border-b border-slate-100 flex items-center justify-between rounded-t-3xl z-10">
           <div>

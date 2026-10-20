@@ -2,123 +2,107 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 
 export default function Navbar() {
-  const pathname = usePathname();
   const { totalCartCount, quote, setIsCartOpen, formatNGN } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // const navLinks = [
-  //   { name: "Specials Menu", href: "/#menu" },
-  //   { name: "Track Live Order", href: "/track" },
-  //   { name: "Profile", href: "/profile" },
-  //   { name: "API Specs", href: "/docs" },
-  // ];
+  const navLinks = [
+    { name: "Menu", href: "/#menu" },
+    { name: "Track Order", href: "/track" },
+    { name: "My Account", href: "/profile" },
+  ];
 
   return (
-    <header className="sticky top-3 z-30 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full transition-all animate-nav-entrance">
-      <div className="glass-nav rounded-2xl px-5 py-3 flex items-center justify-between shadow-xl shadow-slate-900/5 border border-slate-200/80 backdrop-blur-xl bg-white/90">
-        {/* Brand & Logo */}
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-10 h-10 rounded-xl bg-gradient-to-tr from-red-600 via-amber-500 to-orange-500 flex items-center justify-center text-xl shadow-md shadow-red-600/30 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+    <header className="sticky top-3 z-30 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 w-full">
+      <div className="glass-nav rounded-2xl px-4 sm:px-5 py-3 flex items-center justify-between shadow-xl shadow-slate-900/5 border border-slate-200/80 backdrop-blur-xl bg-white/90">
+
+        {/* Brand */}
+        <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-red-600 via-amber-500 to-orange-500 flex items-center justify-center text-lg shadow-md shadow-red-600/30 group-hover:scale-110 transition-transform duration-300">
             🍳
           </div>
-
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-black text-lg tracking-wider text-slate-900 uppercase block leading-none group-hover:text-red-600 transition-colors">
-                MESHAAI
-              </span>
-            </div>
-          </div>
+          <span className="font-black text-base sm:text-lg tracking-wider text-slate-900 uppercase group-hover:text-red-600 transition-colors">
+            MESHAAI
+          </span>
         </Link>
 
-        {/* Centered Navigation Tabs */}
-        {/* <nav className="hidden md:flex items-center gap-1 bg-slate-100/80 p-1.5 rounded-xl border border-slate-200/60">
-          {navLinks.map((link) => {
-            const isActive = pathname === link.href;
-            return (
-              <Link
-                key={link.name}
-                href={link.href}
-                className={`px-4 py-1.5 rounded-lg text-xs font-extrabold transition-all duration-200 ${
-                  isActive
-                    ? "bg-white text-red-600 shadow-xs border border-slate-200"
-                    : "text-slate-600 hover:text-red-600 hover:bg-white/60"
-                }`}
-              >
-                {link.name}
-              </Link>
-            );
-          })}
-        </nav> */}
+        {/* Desktop nav links */}
+        <nav className="hidden md:flex items-center gap-1">
+          {navLinks.map((link) => (
+            <Link
+              key={link.name}
+              href={link.href}
+              className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-red-600 hover:bg-red-50 transition-all"
+            >
+              {link.name}
+            </Link>
+          ))}
+        </nav>
 
-        {/* Right Action Center */}
-        <div className="flex items-center gap-3">
-          <Link
-            href="/profile"
-            className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 border border-slate-200 hover:border-red-400 text-slate-700 hover:text-red-600 rounded-xl text-xs font-bold transition-all hover:scale-105"
-          >
-            <span>🔑</span>
-            <span>Login</span>
-          </Link>
-
-          {/* Dynamic Cart Trigger */}
-
+        {/* Right actions */}
+        <div className="flex items-center gap-2">
+          {/* Cart button */}
           <button
             onClick={() => setIsCartOpen(true)}
-            className="btn-crimson px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-red-600/30 border border-red-400/40 hover:scale-105 transition-all"
+            className="btn-crimson px-3 sm:px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-lg shadow-red-600/30 hover:scale-105 transition-all"
+            aria-label="Open cart"
           >
-            <span>🛒 Cart</span>
+            <span>🛒</span>
+            <span className="hidden xs:inline">Cart</span>
             {totalCartCount > 0 && (
-              <span className="bg-white text-red-700 px-2 py-0.5 rounded-full font-black text-[11px] font-mono shadow-xs">
+              <span className="bg-white text-red-700 px-1.5 py-0.5 rounded-full font-black text-[11px] shadow-xs">
                 {totalCartCount}
               </span>
             )}
             {quote && (
-              <span className="font-mono text-amber-200 border-l border-red-400/50 pl-2 hidden xs:inline">
+              <span className="font-mono text-amber-200 border-l border-red-400/50 pl-1.5 hidden sm:inline text-[11px]">
                 {formatNGN(quote.grandTotalKobo)}
               </span>
             )}
           </button>
 
-          {/* Mobile Menu Toggle Button */}
+          {/* Mobile menu toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-base transition-colors border border-slate-200"
+            aria-label="Toggle menu"
           >
             {mobileMenuOpen ? "✕" : "☰"}
           </button>
         </div>
       </div>
 
-      {/* Mobile Slide-down Menu Overlay */}
+      {/* Mobile dropdown menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden mt-2 glass-panel p-4 space-y-2 border border-slate-200 shadow-2xl animate-in slide-in-from-top duration-300">
-          {/* {navLinks.map((link) => (
+        <div className="md:hidden mt-2 glass-panel rounded-2xl p-3 space-y-1 border border-slate-200 shadow-2xl bg-white/95 backdrop-blur-xl">
+          {navLinks.map((link) => (
             <Link
               key={link.name}
               href={link.href}
               onClick={() => setMobileMenuOpen(false)}
-              className="block px-4 py-2.5 rounded-xl text-xs font-bold text-slate-800 hover:bg-red-50 hover:text-red-600 transition-colors"
+              className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold text-slate-700 hover:bg-red-50 hover:text-red-600 transition-colors"
             >
+              {link.name === "Menu" && <span>🍳</span>}
+              {link.name === "Track Order" && <span>📍</span>}
+              {link.name === "My Account" && <span>👤</span>}
               {link.name}
             </Link>
-          ))} */}
-          {/* <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
-            <Link
-              href="/admin"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-xs font-bold text-slate-600 hover:text-red-600 flex items-center gap-1"
+          ))}
+          <div className="pt-1 border-t border-slate-100 mt-1">
+            <button
+              onClick={() => { setIsCartOpen(true); setMobileMenuOpen(false); }}
+              className="w-full btn-crimson py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2"
             >
-              🔑 Admin Console
-            </Link>
-            <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-full font-bold">
-              🟢 Open & Sizzling
-            </span>
-          </div> */}
+              🛒 View Cart
+              {totalCartCount > 0 && (
+                <span className="bg-white text-red-700 px-2 py-0.5 rounded-full font-black text-xs">
+                  {totalCartCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       )}
     </header>
