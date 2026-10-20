@@ -28,16 +28,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Backend returns AdminAuthResponse: { accessToken, adminId, username, role, ... }
+    // Backend returns AdminAuthResponse: { accessToken, tokenType, expiresInSeconds, admin: { id, email, fullName, role } }
     const token = data.accessToken || data.token || '';
+    const admin = data.admin || {};
 
     const response = NextResponse.json({
       success: true,
       user: {
-        id: data.adminId || data.id || '',
-        username: data.username || data.email || loginId,
-        email: data.email || loginId,
-        role: data.role || 'ADMIN',
+        id: admin.id || data.adminId || '',
+        username: admin.fullName || admin.email || loginId,
+        email: admin.email || loginId,
+        role: admin.role || data.role || 'ADMIN',
         token,
       },
       token,

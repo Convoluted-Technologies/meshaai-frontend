@@ -4,8 +4,8 @@
  * Automatically logs in with service account credentials from env vars.
  */
 
-const BACKEND_URL = process.env.BACKEND_URL || 'https://meshaai-mainframe.onrender.com';
-const ADMIN_USERNAME = process.env.BACKEND_ADMIN_USERNAME || '';
+const BACKEND_URL = process.env.BACKEND_URL || 'https://meshaai-mainframe-744177391644.europe-west1.run.app';
+const ADMIN_EMAIL = process.env.BACKEND_ADMIN_EMAIL || process.env.BACKEND_ADMIN_USERNAME || '';
 const ADMIN_PASSWORD = process.env.BACKEND_ADMIN_PASSWORD || '';
 
 interface CachedToken {
@@ -17,7 +17,7 @@ interface CachedToken {
 let tokenCache: CachedToken | null = null;
 
 export async function getServerAdminToken(): Promise<string | null> {
-  if (!ADMIN_USERNAME || !ADMIN_PASSWORD) return null;
+  if (!ADMIN_EMAIL || !ADMIN_PASSWORD) return null;
 
   // Return cached token if still valid (with 60s buffer)
   if (tokenCache && Date.now() < tokenCache.expiresAt - 60_000) {
@@ -28,12 +28,14 @@ export async function getServerAdminToken(): Promise<string | null> {
     const res = await fetch(`${BACKEND_URL}/api/v1/admin/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: ADMIN_USERNAME, password: ADMIN_PASSWORD }),
+      // Backend expects { email, password } per AdminLoginRequest schema
+      body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }),
     });
 
     if (!res.ok) return null;
 
     const data = await res.json();
+    // AdminAuthResponse: { accessToken, tokenType, expiresInSeconds, admin: {...} }
     const token = data.accessToken || data.token || '';
     if (!token) return null;
 

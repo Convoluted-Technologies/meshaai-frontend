@@ -122,7 +122,11 @@ export async function POST(req: NextRequest) {
         allowedModifierIds.push(modId);
       } else {
         console.error(`[catalog POST] modifier create failed:`, JSON.stringify(raw));
-        // Don't block the preset save — just skip this modifier
+        // Return error immediately so user knows what went wrong
+        return NextResponse.json({
+          success: false,
+          detail: `Failed to save extra "${extra.name}": ${raw?.detail || raw?.title || raw?.message || `HTTP ${r.status}`}`,
+        }, { status: 400 });
       }
     }
 
@@ -208,6 +212,10 @@ export async function PUT(req: NextRequest) {
         allowedModifierIds.push(modId);
       } else {
         console.error(`[catalog PUT] modifier create failed:`, JSON.stringify(raw));
+        return NextResponse.json({
+          success: false,
+          detail: `Failed to save extra "${extra.name}": ${raw?.detail || raw?.title || raw?.message || `HTTP ${r.status}`}`,
+        }, { status: 400 });
       }
     }
 
