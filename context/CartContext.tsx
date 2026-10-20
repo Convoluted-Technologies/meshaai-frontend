@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { PresetMeal, QuoteResponse, SelectedExtra } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 
@@ -8,6 +8,15 @@ export interface CartLineItem {
   qty: number;
   extras: SelectedExtra[];
 }
+
+// ── Location state ────────────────────────────────────────────────────────────
+export type LocationStatus =
+  | 'idle'        // not yet requested
+  | 'requesting'  // browser permission prompt showing
+  | 'granted'     // have coords
+  | 'denied'      // user denied
+  | 'unavailable' // browser doesn't support / error
+  | 'out_of_zone' // coords obtained but backend says out of zone
 
 interface CartContextType {
   presets: PresetMeal[];
@@ -34,6 +43,8 @@ interface CartContextType {
   setNote: (val: string) => void;
   setLat: (val: number) => void;
   setLng: (val: number) => void;
+  locationStatus: LocationStatus;
+  requestLocation: () => void;
   fetchCatalog: () => void;
   handleCreateOrderAndPay: () => Promise<void>;
   isSubmitting: boolean;
@@ -42,37 +53,34 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+// Central Lagos fallback — used when user denies or location is unavailable
+const DEFAULT_LAT = 6.5244;
+const DEFAULT_LNG = 3.3792;
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [presets, setPresets] = useState<PresetMeal[]>([]);
   const [loadingCatalog, setLoadingCatalog] = useState(true);
 
-  // Cart state: presetId -> CartLineItem
   const [cart, setCart] = useState<Record<string, CartLineItem>>({});
-  const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
+  const [isCartOpen, setIsCartOpenState] = useState<boolean>(false);
 
-  // Delivery Location state — no defaults; user must enter their address
   const [lat, setLat] = useState<number>(0);
   const [lng, setLng] = useState<number>(0);
   const [address, setAddress] = useState<string>('');
   const [landmark, setLandmark] = useState<string>('');
-
-  // Phone & Identity state — no defaults
   const [phone, setPhone] = useState<string>('');
   const [note, setNote] = useState<string>('');
 
-  // Quote State
+  const [locationStatus, setLocationStatus] = useState<LocationStatus>('idle');
+
   const [quote, setQuote] = useState<QuoteResponse | null>(null);
   const [quoteError, setQuoteError] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  // Cache the last quoteId returned by the backend (required for order creation)
   const latestQuoteId = React.useRef<string | null>(null);
-  // Track when the Render backend is cold-starting
   const [backendWakingUp, setBackendWakingUp] = useState<boolean>(false);
 
-  useEffect(() => {
-    fetchCatalog();
-  }, []);
+  useEffect(() => { fetchCatalog(); }, []);
 
   async function fetchCatalog() {
     setLoadingCatalog(true);
@@ -80,7 +88,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const MAX_RETRIES = 3;
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
-        // Client-side 30s timeout to prevent browser "Failed to fetch"
         const controller = new AbortController();
         const tid = setTimeout(() => controller.abort(), 30_000);
         const res = await fetch('/api/catalog', { signal: controller.signal }).finally(() => clearTimeout(tid));
@@ -91,7 +98,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           setLoadingCatalog(false);
           return;
         }
-        // 504 means the backend is still waking up
         if (res.status === 504 || !data.presets) {
           setBackendWakingUp(true);
           if (attempt < MAX_RETRIES) {
@@ -99,185 +105,168 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             continue;
           }
         }
-      } catch (err: any) {
-        // AbortError = our 30s client timeout hit; try again
+      } catch {
         if (attempt < MAX_RETRIES) {
           setBackendWakingUp(true);
           await new Promise((r) => setTimeout(r, 3000 * attempt));
           continue;
         }
-        console.error('Failed to load catalog after retries:', err);
       }
     }
     setLoadingCatalog(false);
   }
 
+  // ── Location permission & GPS ─────────────────────────────────────────────
+  const requestLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setLocationStatus('unavailable');
+      // Fall back to Lagos centre so quote can still run
+      setLat(DEFAULT_LAT);
+      setLng(DEFAULT_LNG);
+      return;
+    }
+    setLocationStatus('requesting');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLat(pos.coords.latitude);
+        setLng(pos.coords.longitude);
+        setLocationStatus('granted');
+      },
+      () => {
+        // Denied or error — fall back to Lagos centre
+        setLocationStatus('denied');
+        setLat(DEFAULT_LAT);
+        setLng(DEFAULT_LNG);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  }, []);
+
+  // Request location when cart opens (only once per session)
+  const setIsCartOpen = useCallback((open: boolean) => {
+    setIsCartOpenState(open);
+    if (open && locationStatus === 'idle') {
+      requestLocation();
+    }
+  }, [locationStatus, requestLocation]);
+
   const totalCartCount = Object.values(cart).reduce((sum, item) => sum + item.qty, 0);
 
-  // Add or replace a cart entry (called from the dish detail modal)
   function addToCart(presetId: string, qty: number, extras: SelectedExtra[]) {
     if (qty <= 0) {
-      setCart((prev) => {
-        const copy = { ...prev };
-        delete copy[presetId];
-        return copy;
-      });
+      setCart((prev) => { const c = { ...prev }; delete c[presetId]; return c; });
       return;
     }
     setCart((prev) => ({ ...prev, [presetId]: { qty, extras } }));
   }
 
-  // +/- from cart drawer (keeps existing extras)
   function updateQuantity(presetId: string, delta: number) {
     setCart((prev) => {
       const current = prev[presetId] || { qty: 0, extras: [] };
       const next = Math.max(0, current.qty + delta);
-      if (next === 0) {
-        const copy = { ...prev };
-        delete copy[presetId];
-        return copy;
-      }
+      if (next === 0) { const c = { ...prev }; delete c[presetId]; return c; }
       return { ...prev, [presetId]: { ...current, qty: next } };
     });
   }
 
   function removeFromCart(presetId: string) {
-    setCart((prev) => {
-      const copy = { ...prev };
-      delete copy[presetId];
-      return copy;
-    });
+    setCart((prev) => { const c = { ...prev }; delete c[presetId]; return c; });
   }
 
-  // Debounced quote fetch
+  // ── Debounced quote ───────────────────────────────────────────────────────
   useEffect(() => {
     const items = Object.entries(cart)
-      .filter(([_, line]) => line.qty > 0)
-      .map(([presetId, line]) => ({ presetId, qty: line.qty, extras: line.extras }));
+      .filter(([_, l]) => l.qty > 0)
+      .map(([presetId, l]) => ({ presetId, qty: l.qty, extras: l.extras }));
 
-    if (items.length === 0) {
-      setQuote(null);
-      setQuoteError('');
-      return;
-    }
+    if (items.length === 0) { setQuote(null); setQuoteError(''); return; }
+
+    // Don't run quote until we have coordinates (either real or fallback)
+    if (!lat || !lng) { setQuote(null); return; }
 
     const timer = setTimeout(async () => {
       try {
         setQuoteError('');
-        // Skip quote if coordinates haven't been set yet
-        if (!lat || !lng) {
-          setQuote(null);
-          return;
-        }
         const res = await fetch('/api/quote', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            items,
-            location: { lat, lng },
-          }),
+          body: JSON.stringify({ items, location: { lat, lng } }),
         });
         const data = await res.json();
         if (res.ok && data.quote) {
           setQuote(data.quote);
-          // Cache the backend quoteId for later use during order creation
           if (data.quoteId) latestQuoteId.current = data.quoteId;
+          // Clear out_of_zone status if quote succeeds
+          setLocationStatus((s) => s === 'out_of_zone' ? 'granted' : s);
         } else {
           setQuote(null);
-          // Branch on error code per contract section 1.4
           const errorCode = data.code || data.errorCode || '';
           if (errorCode === 'OUT_OF_ZONE') {
-            setQuoteError('Delivery is not currently available at this location.');
+            setLocationStatus('out_of_zone');
+            setQuoteError("We don't deliver to your current location yet. You can still place an order — just enter your address manually in checkout.");
           } else if (errorCode === 'KITCHEN_PAUSED') {
             setQuoteError('The kitchen serving your area is temporarily paused. Please check back shortly.');
           } else if (errorCode === 'ORDERING_PAUSED') {
-            setQuoteError('Ordering is temporarily closed for maintenance. Please check back soon.');
+            setQuoteError('Ordering is temporarily closed. Please check back soon.');
           } else if (errorCode === 'PRESET_NOT_FOUND' || errorCode === 'PRESET_UNAVAILABLE') {
             setQuoteError('One or more items in your cart is currently unavailable.');
           } else {
-            setQuoteError(data.detail || data.title || 'Failed to calculate delivery quote');
+            setQuoteError(data.detail || data.title || 'Unable to calculate delivery quote.');
           }
         }
-      } catch (err: any) {
-        setQuoteError('Server network error calculating quote');
+      } catch {
+        setQuoteError('Network error calculating quote. Please try again.');
       }
-    }, 250);
+    }, 400);
 
     return () => clearTimeout(timer);
   }, [cart, lat, lng]);
 
+  // ── Order + Pay (cart drawer path) ───────────────────────────────────────
   async function handleCreateOrderAndPay() {
-    if (!phone) {
-      alert('Please enter your phone number to proceed with order');
-      return;
-    }
-
     const items = Object.entries(cart)
-      .filter(([_, line]) => line.qty > 0)
-      .map(([presetId, line]) => ({ presetId, qty: line.qty, extras: line.extras }));
+      .filter(([_, l]) => l.qty > 0)
+      .map(([presetId, l]) => ({ presetId, qty: l.qty, extras: l.extras }));
 
-    if (items.length === 0) {
-      alert('Please select at least one preset meal');
-      return;
-    }
+    if (items.length === 0) return;
+
+    const resolvedLat = lat || DEFAULT_LAT;
+    const resolvedLng = lng || DEFAULT_LNG;
 
     setIsSubmitting(true);
-
     try {
       const idempotencyKey = `idem_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
       const orderRes = await fetch('/api/orders', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Idempotency-Key': idempotencyKey,
-        },
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey },
         body: JSON.stringify({
           phone,
           items,
-          location: {
-            lat,
-            lng,
-            address,
-            landmark,
-          },
+          location: { lat: resolvedLat, lng: resolvedLng, address, landmark },
           note,
-          // Pass the cached quoteId so the backend order route can skip re-quoting
           ...(latestQuoteId.current ? { quoteId: latestQuoteId.current } : {}),
         }),
       });
-
       const orderData = await orderRes.json();
       if (!orderRes.ok) {
-        const errorCode = orderData.code || orderData.errorCode || '';
-        if (errorCode === 'QUOTE_EXPIRED') {
-          alert('Your pricing quote has expired (15-min limit). We\'ve refreshed your cart.');
-        } else if (errorCode === 'ORDERING_PAUSED') {
-          alert('Ordering is temporarily closed for maintenance. Please check back soon.');
-        } else {
-          alert(orderData.detail || orderData.title || 'Failed to create order');
-        }
+        alert(orderData.detail || orderData.title || 'Failed to create order');
         setIsSubmitting(false);
         return;
       }
-
       const createdOrder = orderData.order;
-
-      // Initialize Flutterwave payment
       const payRes = await fetch('/api/payments/initialize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderCode: createdOrder.code }),
       });
-
       const payData = await payRes.json();
       if (payRes.ok && payData.checkoutUrl) {
         window.location.href = payData.checkoutUrl;
       } else {
-        alert('Order created! Redirecting to tracker...');
         router.push(`/track?code=${createdOrder.code}&phone=${encodeURIComponent(phone)}`);
       }
     } catch (err: any) {
-      alert('Error creating order: ' + err.message);
+      alert('Error: ' + err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -286,38 +275,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const formatNGN = (kobo: number) => `₦${(kobo / 100).toLocaleString()}`;
 
   return (
-    <CartContext.Provider
-      value={{
-        presets,
-        loadingCatalog,
-        backendWakingUp,
-        cart,
-        totalCartCount,
-        isCartOpen,
-        setIsCartOpen,
-        addToCart,
-        updateQuantity,
-        removeFromCart,
-        quote,
-        quoteError,
-        lat,
-        lng,
-        address,
-        landmark,
-        phone,
-        note,
-        setAddress,
-        setLandmark,
-        setPhone,
-        setNote,
-        setLat,
-        setLng,
-        fetchCatalog,
-        handleCreateOrderAndPay,
-        isSubmitting,
-        formatNGN,
-      }}
-    >
+    <CartContext.Provider value={{
+      presets, loadingCatalog, backendWakingUp,
+      cart, totalCartCount, isCartOpen, setIsCartOpen,
+      addToCart, updateQuantity, removeFromCart,
+      quote, quoteError,
+      lat, lng, address, landmark, phone, note,
+      setAddress, setLandmark, setPhone, setNote, setLat, setLng,
+      locationStatus, requestLocation,
+      fetchCatalog, handleCreateOrderAndPay, isSubmitting, formatNGN,
+    }}>
       {children}
     </CartContext.Provider>
   );
@@ -325,8 +292,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
 export function useCart() {
   const context = useContext(CartContext);
-  if (!context) {
-    throw new Error('useCart must be used within a CartProvider');
-  }
+  if (!context) throw new Error('useCart must be used within a CartProvider');
   return context;
 }

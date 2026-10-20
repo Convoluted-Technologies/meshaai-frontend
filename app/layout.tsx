@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
-// import Navbar from "@/components/Navbar";
 import CartDrawer from "@/components/CartDrawer";
 import FoodCursor from "@/components/FoodCursor";
+import CookieBanner from "@/components/CookieBanner";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -29,6 +29,9 @@ export default function RootLayout({
 
           {/* Slide-over Cart Drawer */}
           <CartDrawer />
+
+          {/* Cookie consent banner */}
+          <CookieBanner />
 
           {/* ── Footer ────────────────────────────────────────────────────── */}
           <footer className="bg-slate-950 text-white mt-16">
@@ -83,11 +86,6 @@ export default function RootLayout({
                   <li>
                     <Link href="/profile" className="text-slate-300 hover:text-amber-400 transition-colors">
                       My Account
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/docs" className="text-slate-300 hover:text-amber-400 transition-colors">
-                      API Docs
                     </Link>
                   </li>
                 </ul>
