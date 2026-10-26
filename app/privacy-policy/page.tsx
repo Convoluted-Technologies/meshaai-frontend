@@ -217,7 +217,7 @@ export default function PrivacyPolicyPage() {
             <div className="mt-3 p-4 bg-slate-50 rounded-2xl border border-slate-200 text-sm space-y-1">
               <p className="font-semibold text-slate-900">Meshaai Data Protection Officer</p>
               <p>Email: <a href="mailto:privacy@meshaai.com" className="text-amber-600 hover:underline">privacy@meshaai.com</a></p>
-              <p>Address: Lagos, Nigeria</p>
+              <p>Address: Abuja, Nigeria</p>
             </div>
           </section>
 

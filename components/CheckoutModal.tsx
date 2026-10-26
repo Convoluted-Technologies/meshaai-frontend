@@ -146,14 +146,14 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
 
     // ── Resolve coordinates ────────────────────────────────
     // If the user typed a custom address without clicking a quick-zone button,
-    // lat/lng will still be 0. Fall back to central Lagos so the backend can
+    // lat/lng will still be 0. Fall back to central Abuja so the backend can
     // at least attempt the quote rather than failing with OUT_OF_ZONE immediately.
     let resolvedLat = lat;
     let resolvedLng = lng;
     if (!resolvedLat || !resolvedLng) {
-      // Central Lagos default — backend will validate delivery zone from address text
-      resolvedLat = 6.5244;
-      resolvedLng = 3.3792;
+      // Central Abuja default — backend will validate delivery zone from address text
+      resolvedLat = 9.0765;
+      resolvedLng = 7.3986;
       setLat(resolvedLat);
       setLng(resolvedLng);
     }
@@ -364,9 +364,9 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
             {/* Quick zone buttons */}
             <div className="flex gap-2 text-[11px] mb-1">
               <span className="text-slate-400">Quick zones:</span>
-              <button type="button" onClick={() => { setLat(6.5244); setLng(3.3792); setAddressLocal('12 Commercial Avenue, Yaba, Lagos'); }} className="text-red-600 hover:underline font-semibold">Yaba</button>
-              <button type="button" onClick={() => { setLat(6.6018); setLng(3.3515); setAddressLocal('Allen Avenue, Ikeja, Lagos'); }} className="text-red-600 hover:underline font-semibold">Ikeja</button>
-              <button type="button" onClick={() => { setLat(6.4281); setLng(3.4219); setAddressLocal('Victoria Island, Lagos'); }} className="text-red-600 hover:underline font-semibold">VI</button>
+              <button type="button" onClick={() => { setLat(9.0765); setLng(7.3986); setAddressLocal('Central Business District, Abuja'); }} className="text-red-600 hover:underline font-semibold">CBD</button>
+              <button type="button" onClick={() => { setLat(9.0579); setLng(7.4951); setAddressLocal('Garki, Abuja'); }} className="text-red-600 hover:underline font-semibold">Garki</button>
+              <button type="button" onClick={() => { setLat(9.0820); setLng(7.4390); setAddressLocal('Wuse, Abuja'); }} className="text-red-600 hover:underline font-semibold">Wuse</button>
             </div>
             <input
               type="text"

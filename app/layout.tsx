@@ -50,7 +50,7 @@ export default function RootLayout({
                   </div>
                 </div>
                 <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
-                  Lagos&apos; finest roadside-inspired gourmet bread and egg meals,
+                  Abuja&apos;s finest roadside-inspired gourmet bread and egg meals,
                   prepared fresh to order and delivered hot to your door. Freshly
                   fried eggs, artisan bread, and grilled sausages — elevated.
                 </p>

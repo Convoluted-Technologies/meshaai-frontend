@@ -144,7 +144,7 @@ export default function TermsOfServicePage() {
             <h2 className="text-xl font-bold text-slate-900 mb-3">7. Food Safety &amp; Quality</h2>
             <p className="text-sm">
               Meshaai is committed to food safety and prepares all meals fresh to order.
-              We operate in compliance with Lagos State food safety regulations.
+              We operate in compliance with Abuja food safety regulations.
             </p>
             <ul className="list-disc list-inside space-y-1.5 text-sm mt-2">
               <li>All orders are prepared in our registered kitchen facilities.</li>
@@ -214,7 +214,7 @@ export default function TermsOfServicePage() {
             <div className="mt-3 p-4 bg-slate-50 rounded-2xl border border-slate-200 text-sm space-y-1">
               <p className="font-semibold text-slate-900">Meshaai Customer Support</p>
               <p>Email: <a href="mailto:support@meshaai.com" className="text-amber-600 hover:underline">support@meshaai.com</a></p>
-              <p>Address: Lagos, Nigeria</p>
+              <p>Address: Abuja, Nigeria</p>
             </div>
           </section>
 

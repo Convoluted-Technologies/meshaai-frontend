@@ -61,7 +61,7 @@ export default function AboutPage() {
   const milestones = [
     { year: "2026", event: "Meshaai Founded", description: "Started with a single kitchen in Abuja" },
     { year: "2026", event: "1000+ Orders", description: "Reached our first thousand happy customers" },
-    { year: "2026", event: "Delivery Expansion", description: "Expanded coverage across Lagos metropolis" },
+    { year: "2026", event: "Delivery Expansion", description: "Expanded coverage across Abuja metropolis" },
     { year: "2026", event: "Premium Menu", description: "Launched gourmet meal customization options" },
   ];
 
@@ -81,7 +81,7 @@ export default function AboutPage() {
             About Meshaai
           </h1>
           <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
-            Elevating Lagos' beloved roadside bread and egg culture into a
+            Elevating Abuja's beloved roadside bread and egg culture into a
             premium, convenient dining experience delivered right to your door.
           </p>
         </div>
@@ -94,7 +94,7 @@ export default function AboutPage() {
           </div>
           <div className="space-y-4 text-slate-700 text-lg leading-relaxed">
             <p>
-              Meshaai was born from a simple observation: Lagos' roadside bread
+              Meshaai was born from a simple observation: Abuja's roadside bread
               and egg vendors serve some of the most delicious, comforting meals
               in the city. But accessing them often meant navigating traffic,
               unpredictable wait times, and varying quality standards.
@@ -153,7 +153,7 @@ export default function AboutPage() {
             </h2>
             <p className="text-slate-600 text-lg max-w-2xl mx-auto">
               From a single kitchen to serving thousands of happy customers
-              across Lagos.
+              across Abuja.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -53,9 +53,9 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-// Central Lagos fallback — used when user denies or location is unavailable
-const DEFAULT_LAT = 6.5244;
-const DEFAULT_LNG = 3.3792;
+// Central Abuja fallback — used when user denies or location is unavailable
+const DEFAULT_LAT = 9.0765;
+const DEFAULT_LNG = 7.3986;
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();

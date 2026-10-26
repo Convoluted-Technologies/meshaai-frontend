@@ -53,7 +53,7 @@ export default function TermsAndConditionsPage() {
               Meshaai is a gourmet meal delivery platform specialising in freshly
               prepared bread, egg, and sausage preset meals. We connect customers with
               our kitchen facilities and dispatch riders for last-mile delivery within
-              our operational zones in Lagos, Nigeria.
+              our operational zones in Abuja, Nigeria.
             </p>
           </section>
 
@@ -111,7 +111,7 @@ export default function TermsAndConditionsPage() {
           <section>
             <h2 className="text-xl font-bold text-slate-900 mb-3">6. Delivery</h2>
             <ul className="list-disc list-inside space-y-2 text-sm">
-              <li><strong>Delivery Zones:</strong> We currently deliver within designated areas of Lagos. You can verify your location's eligibility during checkout.</li>
+              <li><strong>Delivery Zones:</strong> We currently deliver within designated areas of Abuja. You can verify your location's eligibility during checkout.</li>
               <li><strong>Estimated Times:</strong> Delivery estimates (typically 15–45 minutes) are provided in good faith but are not guarantees. Times may vary due to traffic, weather, or high demand.</li>
               <li><strong>Failed Delivery:</strong> If delivery fails because you are unavailable or provided an incorrect address, re-delivery may incur an additional fee.</li>
               <li><strong>Risk Transfer:</strong> Risk of damage or loss passes to you upon delivery to the specified address.</li>
@@ -203,8 +203,8 @@ export default function TermsAndConditionsPage() {
             <p className="text-sm">
               These Terms are governed by and construed in accordance with the laws of
               the Federal Republic of Nigeria. Any disputes arising under these Terms
-              shall be subject to the exclusive jurisdiction of the courts of Lagos
-              State, Nigeria.
+              shall be subject to the exclusive jurisdiction of the courts of Abuja,
+              Nigeria.
             </p>
             <p className="text-sm mt-3">
               Before initiating formal proceedings, we encourage you to contact us at{" "}
@@ -230,7 +230,7 @@ export default function TermsAndConditionsPage() {
             <div className="mt-3 p-4 bg-slate-50 rounded-2xl border border-slate-200 text-sm space-y-1">
               <p className="font-semibold text-slate-900">Meshaai Customer Support</p>
               <p>Email: <a href="mailto:support@meshaai.com" className="text-amber-600 hover:underline">support@meshaai.com</a></p>
-              <p>Address: Lagos, Nigeria</p>
+              <p>Address: Abuja, Nigeria</p>
             </div>
           </section>
 
