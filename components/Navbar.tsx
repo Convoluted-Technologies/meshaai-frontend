@@ -10,7 +10,8 @@ export default function Navbar() {
 
   const navLinks = [
     { name: "Menu", href: "/#menu" },
-    { name: "Track Order", href: "/track" },
+    { name: "About", href: "/about" },
+    { name: "FAQ", href: "/faq" },
     { name: "My Account", href: "/profile" },
   ];
 
@@ -85,7 +86,8 @@ export default function Navbar() {
               className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold text-slate-700 hover:bg-red-50 hover:text-red-600 transition-colors"
             >
               {link.name === "Menu" && <span>🍳</span>}
-              {link.name === "Track Order" && <span>📍</span>}
+              {link.name === "About" && <span>ℹ️</span>}
+              {link.name === "FAQ" && <span>❓</span>}
               {link.name === "My Account" && <span>👤</span>}
               {link.name}
             </Link>

@@ -34,7 +34,11 @@ export default function CartDrawer() {
   const isOperationallyClosed = ['KITCHEN_PAUSED', 'ORDERING_PAUSED'].some(
     (k) => quoteError.includes(k)
   );
-  const canCheckout = cartEntries.length > 0 && !isOperationallyClosed;
+  
+  // Checkout ONLY enabled when user explicitly grants location access
+  // The only allowed status is 'granted' (or 'out_of_zone' which means location was granted but outside zone)
+  const hasLocationGranted = locationStatus === 'granted' || locationStatus === 'out_of_zone';
+  const canCheckout = cartEntries.length > 0 && !isOperationallyClosed && hasLocationGranted;
 
   function openCheckout() {
     setIsCheckoutOpen(true);
@@ -83,42 +87,45 @@ export default function CartDrawer() {
               {showLocationBanner && (() => {
                 const cfg = {
                   requesting: {
-                    icon: '📍', color: 'bg-blue-50 border-blue-200 text-blue-700',
-                    title: 'Getting your location…',
-                    body: 'Please allow location access in the browser prompt.',
+                    icon: '📍', color: 'bg-amber-100 border-amber-300 text-amber-800',
+                    title: 'Location Access Required',
+                    body: 'Please allow location access in your browser to calculate delivery fees and proceed to checkout.',
                     action: null,
                   },
                   denied: {
-                    icon: '📍', color: 'bg-amber-50 border-amber-200 text-amber-700',
-                    title: 'Location access denied',
-                    body: "We'll use your address in checkout to estimate fees.",
-                    action: { label: 'Try again', fn: requestLocation },
+                    icon: '🚫', color: 'bg-red-100 border-red-300 text-red-800',
+                    title: 'Location Access Required',
+                    body: "We need your location to calculate delivery fees and ensure we can deliver to you. Please click 'Allow Location' to continue.",
+                    action: { label: 'Allow Location', fn: requestLocation },
                   },
                   unavailable: {
-                    icon: '📍', color: 'bg-slate-50 border-slate-200 text-slate-600',
-                    title: 'Location not available',
-                    body: 'Enter your delivery address in checkout — we\'ll calculate fees there.',
+                    icon: '⚠️', color: 'bg-red-100 border-red-300 text-red-800',
+                    title: 'Location Required',
+                    body: 'Your browser doesn\'t support location services. Please use a modern browser with location support to place an order.',
                     action: null,
                   },
                   out_of_zone: {
-                    icon: '🚫', color: 'bg-orange-50 border-orange-200 text-orange-700',
-                    title: 'Outside our current delivery zone',
-                    body: 'You can still place an order — enter your address manually in checkout and our team will confirm.',
+                    icon: '🌍', color: 'bg-orange-100 border-orange-300 text-orange-800',
+                    title: 'Outside Current Delivery Zone',
+                    body: 'You can still place an order! Enter your address manually in checkout and our team will confirm if we can deliver to you.',
                     action: null,
                   },
                 } as const;
                 const c = cfg[locationStatus as keyof typeof cfg];
                 if (!c) return null;
                 return (
-                  <div className={`rounded-2xl border p-3.5 ${c.color}`}>
-                    <div className="flex items-start gap-2.5">
-                      <span className="text-base shrink-0 mt-0.5">{c.icon}</span>
+                  <div className={`rounded-2xl border-2 p-4 ${c.color} shadow-sm`}>
+                    <div className="flex items-start gap-3">
+                      <span className="text-xl shrink-0 mt-0.5">{c.icon}</span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold">{c.title}</p>
-                        <p className="text-[11px] mt-0.5 leading-relaxed opacity-80">{c.body}</p>
+                        <p className="text-sm font-black mb-1">{c.title}</p>
+                        <p className="text-xs leading-relaxed opacity-90">{c.body}</p>
                         {c.action && (
-                          <button onClick={c.action.fn} className="text-[11px] font-bold underline mt-1">
-                            {c.action.label}
+                          <button 
+                            onClick={c.action.fn} 
+                            className="text-xs font-bold underline mt-2 hover:opacity-80 transition-opacity"
+                          >
+                            {c.action.label} →
                           </button>
                         )}
                       </div>
@@ -245,13 +252,32 @@ export default function CartDrawer() {
                     : 'Checkout →'}
                 </button>
 
-                {!quote && !quoteError && (locationStatus === 'idle' || locationStatus === 'requesting') && (
-                  <p className="text-center text-[11px] text-slate-400">
-                    {locationStatus === 'requesting' ? 'Allow location access to see delivery fee' : 'Getting your location…'}
-                  </p>
+                {/* Location status messages */}
+                {!hasLocationGranted && (
+                  <div className="text-center text-[11px] space-y-1">
+                    {locationStatus === 'requesting' ? (
+                      <p className="text-amber-600 font-semibold animate-pulse">
+                        ⏳ Please allow location access to continue
+                      </p>
+                    ) : locationStatus === 'denied' ? (
+                      <p className="text-red-600 font-semibold">
+                        🚫 Location access required. Please allow location to proceed.
+                      </p>
+                    ) : locationStatus === 'unavailable' ? (
+                      <p className="text-red-600 font-semibold">
+                        ⚠️ Location services unavailable. Please use a browser with location support.
+                      </p>
+                    ) : (
+                      <p className="text-slate-500">
+                        📍 Getting your location to calculate delivery fee…
+                      </p>
+                    )}
+                  </div>
                 )}
-                {locationStatus === 'denied' && !quote && (
-                  <p className="text-center text-[11px] text-slate-400">Delivery fee calculated at checkout</p>
+                {hasLocationGranted && !quote && !quoteError && (
+                  <p className="text-center text-[11px] text-slate-400">
+                    Calculating delivery fee…
+                  </p>
                 )}
               </div>
             )}

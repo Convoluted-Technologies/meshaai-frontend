@@ -351,12 +351,6 @@ export default function ProfilePage() {
                         <span className="font-mono font-bold text-white text-sm block">
                           {formatNGN(o.totalKobo)}
                         </span>
-                        <Link
-                          href={`/track?code=${o.code}&phone=${encodeURIComponent(o.phone)}`}
-                          className="inline-block text-[11px] text-amber-400 hover:text-amber-300 font-semibold transition-colors"
-                        >
-                          Track →
-                        </Link>
                       </div>
                     </div>
                   ))}

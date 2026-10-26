@@ -29,7 +29,7 @@ export async function initializeFlutterwavePayment(
   const txRef = order.paymentTxRef;
   const amountNGN = order.totalKobo / 100;
   const baseUrl = hostOrigin || 'http://localhost:3000';
-  const redirectUrl = `${baseUrl}/track?code=${order.code}&phone=${encodeURIComponent(order.phone)}&paid=1`;
+  const redirectUrl = `${baseUrl}/profile?paid=1`;
 
   // Create payment record
   const existingPayments = getPaymentsFromStore();

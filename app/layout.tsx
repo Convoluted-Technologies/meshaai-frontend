@@ -79,8 +79,13 @@ export default function RootLayout({
                     </Link>
                   </li>
                   <li>
-                    <Link href="/track" className="text-slate-300 hover:text-amber-400 transition-colors">
-                      Track Your Order
+                    <Link href="/about" className="text-slate-300 hover:text-amber-400 transition-colors">
+                      About Us
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/faq" className="text-slate-300 hover:text-amber-400 transition-colors">
+                      FAQ
                     </Link>
                   </li>
                   <li>
@@ -91,10 +96,15 @@ export default function RootLayout({
                 </ul>
               </div>
 
-              {/* Legal */}
+              {/* Support */}
               <div className="space-y-4">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Legal</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Support</p>
                 <ul className="space-y-2.5 text-sm">
+                  <li>
+                    <Link href="/feedback" className="text-slate-300 hover:text-amber-400 transition-colors">
+                      Contact Us
+                    </Link>
+                  </li>
                   <li>
                     <Link href="/privacy-policy" className="text-slate-300 hover:text-amber-400 transition-colors">
                       Privacy Policy
@@ -103,11 +113,6 @@ export default function RootLayout({
                   <li>
                     <Link href="/terms-and-conditions" className="text-slate-300 hover:text-amber-400 transition-colors">
                       Terms &amp; Conditions
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/terms-of-service" className="text-slate-300 hover:text-amber-400 transition-colors">
-                      Terms of Service
                     </Link>
                   </li>
                   <li>
@@ -124,9 +129,10 @@ export default function RootLayout({
               <div className="max-w-6xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
                 <p>© 2026 Meshaai Gourmet Bread &amp; Egg Dining. All rights reserved.</p>
                 <div className="flex items-center gap-4">
+                  <Link href="/about" className="hover:text-slate-300 transition-colors">About</Link>
+                  <Link href="/faq" className="hover:text-slate-300 transition-colors">FAQ</Link>
+                  <Link href="/feedback" className="hover:text-slate-300 transition-colors">Contact</Link>
                   <Link href="/privacy-policy" className="hover:text-slate-300 transition-colors">Privacy</Link>
-                  <Link href="/terms-and-conditions" className="hover:text-slate-300 transition-colors">Terms</Link>
-                  <Link href="/terms-of-service" className="hover:text-slate-300 transition-colors">ToS</Link>
                 </div>
               </div>
             </div>

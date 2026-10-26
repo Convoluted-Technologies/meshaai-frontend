@@ -32,7 +32,7 @@ export async function notifyCustomerOrderEvent(
   let message = '';
   switch (eventType) {
     case 'PAID':
-      message = `[Meshaai] Payment confirmed! Your order #${order.code} has been received and is being prepared. Track: /track?code=${order.code}&phone=${encodeURIComponent(order.phone)}`;
+      message = `[Meshaai] Payment confirmed! Your order #${order.code} has been received and is being prepared.`;
       break;
     case 'OUT_FOR_DELIVERY':
       message = `[Meshaai] Good news! Order #${order.code} is out for delivery with rider ${order.rider?.name || 'our dispatch team'} (${order.rider?.phone || ''}). Give them code: ${order.deliveryProof?.code}`;

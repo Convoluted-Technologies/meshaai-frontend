@@ -286,7 +286,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (payRes.ok && payData.checkoutUrl) {
         window.location.href = payData.checkoutUrl;
       } else {
-        router.push(`/track?code=${createdOrder.code}&phone=${encodeURIComponent(phone)}`);
+        router.push(`/profile`);
       }
     } catch (err: any) {
       alert('Error: ' + err.message);

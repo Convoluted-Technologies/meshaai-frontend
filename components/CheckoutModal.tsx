@@ -222,9 +222,9 @@ export default function CheckoutModal({ onClose, onSuccess }: Props) {
       if (payRes.ok && payData.checkoutUrl) {
         window.location.href = payData.checkoutUrl;
       } else {
-        // Fallback: redirect to tracker if payment link fails
+        // Fallback: redirect to profile page if payment link fails
         onSuccess();
-        router.push(`/track?code=${createdOrder.code}&phone=${encodeURIComponent(phone)}`);
+        router.push(`/profile`);
       }
     } catch (err: any) {
       setSubmitError('Network error: ' + err.message);

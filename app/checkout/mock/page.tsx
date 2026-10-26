@@ -26,7 +26,7 @@ function MockCheckoutContent() {
       });
       const data = await res.json();
       if (data.order) {
-        router.push(`/track?code=${data.order.code}&phone=${encodeURIComponent(data.order.phone)}&paid=1`);
+        router.push(`/profile?paid=1`);
       } else {
         alert('Payment result processed');
         router.push('/');
