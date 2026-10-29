@@ -25,7 +25,7 @@ export default function Navbar() {
             🍳
           </div>
           <span className="font-black text-base sm:text-lg tracking-wider text-slate-900 uppercase group-hover:text-red-600 transition-colors">
-            MESHAAI
+            Meeshaai
           </span>
         </Link>
 

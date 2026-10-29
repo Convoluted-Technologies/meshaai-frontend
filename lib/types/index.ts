@@ -16,6 +16,7 @@ export interface PresetExtra {
   id: string;
   name: string;
   priceKobo: number;
+  imageUrl?: string;
 }
 
 export interface SelectedExtra {

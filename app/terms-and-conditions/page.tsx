@@ -35,7 +35,7 @@ export default function TermsAndConditionsPage() {
           <section>
             <h2 className="text-xl font-bold text-slate-900 mb-3">1. Agreement to Terms</h2>
             <p>
-              These Terms &amp; Conditions ("Terms") govern your use of the Meshaai
+              These Terms &amp; Conditions ("Terms") govern your use of the Meeshaai
               platform, including the website, mobile web app, and all related services
               (collectively, the "Service"). By accessing or using the Service, placing
               an order, or creating an account, you confirm that you have read,
@@ -48,9 +48,9 @@ export default function TermsAndConditionsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-slate-900 mb-3">2. About Meshaai</h2>
+            <h2 className="text-xl font-bold text-slate-900 mb-3">2. About Meeshaai</h2>
             <p>
-              Meshaai is a gourmet meal delivery platform specialising in freshly
+              Meeshaai is a gourmet meal delivery platform specialising in freshly
               prepared bread, egg, and sausage preset meals. We connect customers with
               our kitchen facilities and dispatch riders for last-mile delivery within
               our operational zones in Abuja, Nigeria.
@@ -71,7 +71,7 @@ export default function TermsAndConditionsPage() {
             <h2 className="text-xl font-bold text-slate-900 mb-3">4. Orders &amp; Pricing</h2>
             <h3 className="text-base font-semibold text-slate-800 mb-2">4.1 Order Placement</h3>
             <p className="text-sm">
-              When you place an order through Meshaai, you are making an offer to
+              When you place an order through Meeshaai, you are making an offer to
               purchase the selected items at the displayed price plus applicable delivery
               fees. Your order is confirmed when you receive a confirmation notification
               and your payment is successfully processed.
@@ -88,7 +88,7 @@ export default function TermsAndConditionsPage() {
             <h3 className="text-base font-semibold text-slate-800 mb-2 mt-4">4.3 Order Accuracy</h3>
             <p className="text-sm">
               You are responsible for reviewing your order details before submitting
-              payment. Meshaai is not liable for errors resulting from incorrect
+              payment. Meeshaai is not liable for errors resulting from incorrect
               information provided by you, including wrong delivery addresses.
             </p>
           </section>
@@ -97,14 +97,14 @@ export default function TermsAndConditionsPage() {
             <h2 className="text-xl font-bold text-slate-900 mb-3">5. Payment</h2>
             <p className="text-sm">
               All payments are processed securely through Flutterwave. By placing an
-              order, you authorise Meshaai to charge your selected payment method for
+              order, you authorise Meeshaai to charge your selected payment method for
               the total order amount including delivery fees.
             </p>
             <ul className="list-disc list-inside space-y-1.5 text-sm mt-2">
               <li>Accepted payment methods include debit/credit cards, bank transfers, and USSD as supported by Flutterwave.</li>
               <li>Payment must be completed before your order enters preparation.</li>
               <li>Failed payments will result in your order being automatically cancelled.</li>
-              <li>Meshaai does not store card details. All card data is handled by Flutterwave under PCI-DSS standards.</li>
+              <li>Meeshaai does not store card details. All card data is handled by Flutterwave under PCI-DSS standards.</li>
             </ul>
           </section>
 
@@ -163,9 +163,9 @@ export default function TermsAndConditionsPage() {
           <section>
             <h2 className="text-xl font-bold text-slate-900 mb-3">9. Intellectual Property</h2>
             <p className="text-sm">
-              All content on the Meshaai platform — including the name, logo, menu
+              All content on the Meeshaai platform — including the name, logo, menu
               descriptions, photographs, and UI design — is the exclusive property of
-              Meshaai or its licensors and is protected by copyright and trademark law.
+              Meeshaai or its licensors and is protected by copyright and trademark law.
               You may not reproduce, distribute, or create derivative works without
               our express written consent.
             </p>
@@ -174,13 +174,13 @@ export default function TermsAndConditionsPage() {
           <section>
             <h2 className="text-xl font-bold text-slate-900 mb-3">10. Limitation of Liability</h2>
             <p className="text-sm">
-              To the maximum extent permitted by applicable law, Meshaai's total
+              To the maximum extent permitted by applicable law, Meeshaai's total
               liability to you for any claim arising from these Terms or use of the
               Service shall not exceed the amount you paid for the specific order giving
               rise to the claim.
             </p>
             <p className="text-sm mt-3">
-              Meshaai is not liable for indirect, incidental, special, consequential, or
+              Meeshaai is not liable for indirect, incidental, special, consequential, or
               punitive damages, including loss of profits, data, goodwill, or business
               opportunities, even if we have been advised of the possibility of such
               damages.
@@ -190,7 +190,7 @@ export default function TermsAndConditionsPage() {
           <section>
             <h2 className="text-xl font-bold text-slate-900 mb-3">11. Indemnification</h2>
             <p className="text-sm">
-              You agree to indemnify, defend, and hold harmless Meshaai and its
+              You agree to indemnify, defend, and hold harmless Meeshaai and its
               officers, directors, employees, and agents from any claims, damages,
               losses, or expenses (including reasonable legal fees) arising from your
               use of the Service, violation of these Terms, or infringement of any
@@ -208,8 +208,8 @@ export default function TermsAndConditionsPage() {
             </p>
             <p className="text-sm mt-3">
               Before initiating formal proceedings, we encourage you to contact us at{" "}
-              <a href="mailto:support@meshaai.com" className="text-amber-600 hover:underline font-medium">
-                support@meshaai.com
+              <a href="mailto:support@Meeshaai.com" className="text-amber-600 hover:underline font-medium">
+                support@Meeshaai.com
               </a>{" "}
               to seek an amicable resolution.
             </p>
@@ -228,8 +228,8 @@ export default function TermsAndConditionsPage() {
           <section>
             <h2 className="text-xl font-bold text-slate-900 mb-3">14. Contact</h2>
             <div className="mt-3 p-4 bg-slate-50 rounded-2xl border border-slate-200 text-sm space-y-1">
-              <p className="font-semibold text-slate-900">Meshaai Customer Support</p>
-              <p>Email: <a href="mailto:support@meshaai.com" className="text-amber-600 hover:underline">support@meshaai.com</a></p>
+              <p className="font-semibold text-slate-900">Meeshaai Customer Support</p>
+              <p>Email: <a href="mailto:support@Meeshaai.com" className="text-amber-600 hover:underline">support@Meeshaai.com</a></p>
               <p>Address: Abuja, Nigeria</p>
             </div>
           </section>

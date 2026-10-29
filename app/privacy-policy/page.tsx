@@ -38,14 +38,14 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-xl font-bold text-slate-900 mb-3">1. Introduction</h2>
             <p>
-              Welcome to Meshaai ("we", "our", "us"). We operate a gourmet roadside
-              bread &amp; egg meal delivery service accessible at meshaai.com and
+              Welcome to Meeshaai ("we", "our", "us"). We operate a gourmet roadside
+              bread &amp; egg meal delivery service accessible at Meeshaai.com and
               through our mobile platforms. This Privacy Policy explains how we
               collect, use, disclose, and protect your personal information when you
               place orders, browse our menu, or interact with any of our services.
             </p>
             <p className="mt-3">
-              By using Meshaai, you agree to the collection and use of information in
+              By using Meeshaai, you agree to the collection and use of information in
               accordance with this policy. If you do not agree, please discontinue use
               of our services.
             </p>
@@ -72,7 +72,7 @@ export default function PrivacyPolicyPage() {
             <h3 className="text-base font-semibold text-slate-800 mb-2 mt-5">2.3 Payment Information</h3>
             <p className="text-sm">
               All payment transactions are processed by Flutterwave, a PCI-DSS compliant
-              third-party payment gateway. Meshaai does <strong>not</strong> store your
+              third-party payment gateway. Meeshaai does <strong>not</strong> store your
               card details, bank account numbers, or CVV codes. We only retain the
               transaction reference number and payment status returned by Flutterwave.
             </p>
@@ -148,8 +148,8 @@ export default function PrivacyPolicyPage() {
             </ul>
             <p className="text-sm mt-3">
               To exercise any of these rights, contact us at{" "}
-              <a href="mailto:privacy@meshaai.com" className="text-amber-600 hover:underline font-medium">
-                privacy@meshaai.com
+              <a href="mailto:privacy@Meeshaai.com" className="text-amber-600 hover:underline font-medium">
+                privacy@Meeshaai.com
               </a>. We will respond within 30 days.
             </p>
           </section>
@@ -161,7 +161,7 @@ export default function PrivacyPolicyPage() {
             </p>
             <ul className="list-disc list-inside space-y-1.5 text-sm mt-2">
               <li><strong>admin_token</strong> (httpOnly cookie): Secures admin sessions. Expires after 24 hours.</li>
-              <li><strong>meshaai_user_v1</strong> (localStorage): Stores your name, phone, and saved address for faster future checkouts. Never transmitted without your action.</li>
+              <li><strong>Meeshaai_user_v1</strong> (localStorage): Stores your name, phone, and saved address for faster future checkouts. Never transmitted without your action.</li>
               <li><strong>Analytics (future):</strong> We may implement privacy-respecting analytics tools. You will be notified before any such tools are activated.</li>
             </ul>
           </section>
@@ -181,8 +181,8 @@ export default function PrivacyPolicyPage() {
             <p className="text-sm mt-3">
               Despite these measures, no system is 100% secure. If you discover a
               security vulnerability, please disclose it responsibly to{" "}
-              <a href="mailto:security@meshaai.com" className="text-amber-600 hover:underline font-medium">
-                security@meshaai.com
+              <a href="mailto:security@Meeshaai.com" className="text-amber-600 hover:underline font-medium">
+                security@Meeshaai.com
               </a>.
             </p>
           </section>
@@ -215,8 +215,8 @@ export default function PrivacyPolicyPage() {
               Policy, please contact our Data Protection Officer:
             </p>
             <div className="mt-3 p-4 bg-slate-50 rounded-2xl border border-slate-200 text-sm space-y-1">
-              <p className="font-semibold text-slate-900">Meshaai Data Protection Officer</p>
-              <p>Email: <a href="mailto:privacy@meshaai.com" className="text-amber-600 hover:underline">privacy@meshaai.com</a></p>
+              <p className="font-semibold text-slate-900">Meeshaai Data Protection Officer</p>
+              <p>Email: <a href="mailto:privacy@Meeshaai.com" className="text-amber-600 hover:underline">privacy@Meeshaai.com</a></p>
               <p>Address: Abuja, Nigeria</p>
             </div>
           </section>

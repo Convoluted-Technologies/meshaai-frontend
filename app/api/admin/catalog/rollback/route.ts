@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
         400,
         'Missing Version ID',
         'versionId is required to execute catalog rollback.',
-        'https://meshaai.com/errors/missing-version-id',
+        'https://Meeshaai.com/errors/missing-version-id',
         '/api/admin/catalog/rollback'
       );
     }
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       400,
       'Rollback Failed',
       err.message || 'Unable to execute rollback',
-      'https://meshaai.com/errors/rollback-failed',
+      'https://Meeshaai.com/errors/rollback-failed',
       '/api/admin/catalog/rollback'
     );
   }

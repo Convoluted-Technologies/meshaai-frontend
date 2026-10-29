@@ -138,6 +138,17 @@ export default function DishDetailModal({ preset, onClose }: Props) {
                             </svg>
                           )}
                         </div>
+                        {extra.imageUrl && (
+                          <img 
+                            src={extra.imageUrl} 
+                            alt={extra.name}
+                            className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+                            onError={(e) => {
+                              // Hide image if it fails to load
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        )}
                         <span className={`text-xs font-semibold leading-tight ${selected ? 'text-red-700' : 'text-slate-700'}`}>
                           {extra.name}
                         </span>

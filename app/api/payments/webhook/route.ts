@@ -11,7 +11,7 @@ import { backendFetch } from '@/lib/backend';
  * The backend handles authoritative verification and idempotent order updates.
  */
 
-const FLW_SECRET_HASH = process.env.FLW_SECRET_HASH || 'meshaai-secret-hash';
+const FLW_SECRET_HASH = process.env.FLW_SECRET_HASH || 'Meeshaai-secret-hash';
 
 export async function POST(req: NextRequest) {
   const signature = req.headers.get('verif-hash');

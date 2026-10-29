@@ -76,7 +76,7 @@ export default function AdminPage() {
   const [adminUser, setAdminUser] = useState<any>(null);
 
   // ── Navigation ────────────────────────────────────────────────────────────
-  type Tab = "dashboard" | "orders" | "products" | "payments" | "customers";
+  type Tab = "dashboard" | "orders" | "products" | "payments" | "customers" | "kitchens";
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
 
   // ── Data ──────────────────────────────────────────────────────────────────
@@ -109,6 +109,13 @@ export default function AdminPage() {
   const [refundAmount, setRefundAmount] = useState("");
   const [refundReason, setRefundReason] = useState("Admin customer resolution");
   const [refundLoading, setRefundLoading] = useState(false);
+
+  // ── Kitchens UI ───────────────────────────────────────────────────────────
+  const [kitchens, setKitchens] = useState<any[]>([]);
+  const [kitchenDrawer, setKitchenDrawer] = useState<"closed" | "create" | "edit">("closed");
+  const [editingKitchen, setEditingKitchen] = useState<any>({});
+  const [kitchenSaving, setKitchenSaving] = useState(false);
+  const [kitchenDeleteConfirm, setKitchenDeleteConfirm] = useState<number | null>(null);
 
   // ────────────────────────────────────────────────────────────────────────
   // Auth helpers
@@ -165,6 +172,7 @@ export default function AdminPage() {
     fetchPayments();
     fetchCustomers();
     fetchDashboard();
+    fetchKitchens();
   }
 
   async function fetchOrders() {
@@ -201,6 +209,13 @@ export default function AdminPage() {
     if (!res) return;
     const data = await res.json().catch(() => ({}));
     if (data.metrics) setMetrics(data.metrics);
+  }
+
+  async function fetchKitchens() {
+    const res = await fetch("/api/admin/kitchens", { headers: authHeaders() }).catch(() => null);
+    if (!res) return;
+    const data = await res.json().catch(() => ({}));
+    if (data.kitchens) setKitchens(data.kitchens);
   }
 
   // ────────────────────────────────────────────────────────────────────────
@@ -270,6 +285,104 @@ export default function AdminPage() {
       setRefundReason("Admin customer resolution");
     } else {
       alert(data.detail || "Refund failed");
+    }
+  }
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Kitchen CRUD & Actions
+  // ────────────────────────────────────────────────────────────────────────
+  async function handleSaveKitchen(e: React.FormEvent) {
+    e.preventDefault();
+    
+    // Validation
+    if (!editingKitchen.name?.trim()) {
+      alert("Kitchen name is required.");
+      return;
+    }
+    if (!editingKitchen.operatorName?.trim()) {
+      alert("Operator name is required.");
+      return;
+    }
+    if (!editingKitchen.operatorPhone?.trim()) {
+      alert("Operator phone is required.");
+      return;
+    }
+    if (!editingKitchen.operatorPhone.startsWith("+")) {
+      alert("Operator phone must be in E.164 format (e.g., +2348012345678)");
+      return;
+    }
+    if (editingKitchen.radiusKm <= 0) {
+      alert("Delivery radius must be greater than 0.");
+      return;
+    }
+    
+    // Validate time: closeTime must be after openTime
+    if (editingKitchen.closeTime <= editingKitchen.openTime) {
+      alert("Closing time must be after opening time.");
+      return;
+    }
+
+    setKitchenSaving(true);
+    const isEdit = kitchenDrawer === "edit" && editingKitchen.id;
+    
+    const payload = {
+      name: editingKitchen.name.trim(),
+      latitude: Number(editingKitchen.latitude),
+      longitude: Number(editingKitchen.longitude),
+      timezone: editingKitchen.timezone,
+      openTime: editingKitchen.openTime,
+      closeTime: editingKitchen.closeTime,
+      radiusKm: Number(editingKitchen.radiusKm),
+      operatorName: editingKitchen.operatorName.trim(),
+      operatorPhone: editingKitchen.operatorPhone.trim(),
+      active: Boolean(editingKitchen.active),
+    };
+
+    const res = await fetch(
+      isEdit ? `/api/admin/kitchens/${editingKitchen.id}` : "/api/admin/kitchens",
+      {
+        method: isEdit ? "PUT" : "POST",
+        headers: authHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    
+    const data = await res.json();
+    setKitchenSaving(false);
+    
+    if (res.ok) {
+      fetchKitchens();
+      setKitchenDrawer("closed");
+      setEditingKitchen({});
+    } else {
+      alert(data.detail || "Failed to save kitchen");
+    }
+  }
+
+  async function handleToggleKitchenStatus(kitchenId: number, currentStatus: boolean) {
+    const res = await fetch(`/api/admin/kitchens/${kitchenId}/pause`, {
+      method: "PATCH",
+      headers: authHeaders(),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      fetchKitchens();
+    } else {
+      alert(data.detail || "Failed to toggle kitchen status");
+    }
+  }
+
+  async function handleDeleteKitchen(kitchenId: number) {
+    const res = await fetch(`/api/admin/kitchens/${kitchenId}`, {
+      method: "DELETE",
+      headers: authHeaders(),
+    });
+    if (res.ok) {
+      fetchKitchens();
+      setKitchenDeleteConfirm(null);
+    } else {
+      const data = await res.json();
+      alert(data.detail || "Failed to delete kitchen");
     }
   }
 
@@ -420,7 +533,7 @@ export default function AdminPage() {
             <div className="w-16 h-16 rounded-2xl bg-amber-500 flex items-center justify-center text-3xl mx-auto shadow-xl shadow-amber-500/30 mb-4">
               ⚡
             </div>
-            <h1 className="text-2xl font-black text-white">Meshaai Admin</h1>
+            <h1 className="text-2xl font-black text-white">Meeshaai Admin</h1>
             <p className="text-sm text-slate-400 mt-1">
               Operator console · Sign in to continue
             </p>
@@ -438,7 +551,7 @@ export default function AdminPage() {
                 </label>
                 <input
                   type="text"
-                  placeholder="admin@meshaai.com"
+                  placeholder="admin@Meeshaai.com"
                   value={loginEmail}
                   onChange={(e) => { setLoginEmail(e.target.value); setLoginError(""); }}
                   autoComplete="username"
@@ -487,7 +600,7 @@ export default function AdminPage() {
           </div>
 
           <p className="text-center text-xs text-slate-600 mt-5">
-            Meshaai Operator Console · Restricted Access
+            Meeshaai Operator Console · Restricted Access
           </p>
         </div>
       </div>
@@ -504,6 +617,7 @@ export default function AdminPage() {
     { id: "products", icon: "🍳", label: "Products" },
     { id: "payments", icon: "💳", label: "Payments" },
     { id: "customers", icon: "👥", label: "Customers" },
+    { id: "kitchens", icon: "🏪", label: "Kitchens" },
   ];
 
   return (
@@ -517,7 +631,7 @@ export default function AdminPage() {
               ⚡
             </div>
             <div className="hidden sm:block">
-              <p className="text-sm font-black text-white leading-none">Meshaai</p>
+              <p className="text-sm font-black text-white leading-none">Meeshaai</p>
               <p className="text-[10px] text-slate-500 leading-none mt-0.5">Admin Console</p>
             </div>
           </div>
@@ -1199,6 +1313,116 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+
+        {/* ══════════════════════════════════════════════════════════════════
+            TAB: KITCHENS
+        ══════════════════════════════════════════════════════════════════ */}
+        {activeTab === "kitchens" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-black text-white">Kitchens</h1>
+                <p className="text-sm text-slate-400 mt-1">{kitchens.length} kitchen{kitchens.length !== 1 ? "s" : ""} configured</p>
+              </div>
+              <button
+                onClick={() => {
+                  setKitchenDrawer("create");
+                  setEditingKitchen({
+                    name: "",
+                    latitude: 9.0765,
+                    longitude: 7.3986,
+                    timezone: "Africa/Lagos",
+                    openTime: "06:00:00",
+                    closeTime: "22:00:00",
+                    radiusKm: 7.0,
+                    operatorName: "",
+                    operatorPhone: "",
+                    active: true,
+                  });
+                }}
+                className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-sm font-bold rounded-xl transition-colors flex items-center gap-2"
+              >
+                <span>➕</span>
+                <span>Add Kitchen</span>
+              </button>
+            </div>
+
+            <div className="rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="border-b border-slate-800">
+                    <tr className="text-[10px] uppercase tracking-wider text-slate-500">
+                      <th className="px-4 py-3 font-semibold">Kitchen Name</th>
+                      <th className="px-4 py-3 font-semibold">Location</th>
+                      <th className="px-4 py-3 font-semibold">Hours</th>
+                      <th className="px-4 py-3 font-semibold">Radius</th>
+                      <th className="px-4 py-3 font-semibold">Operator</th>
+                      <th className="px-4 py-3 font-semibold">Status</th>
+                      <th className="px-4 py-3 font-semibold">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {kitchens.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-4 py-10 text-center text-slate-500 italic">
+                          No kitchens configured yet. Click "Add Kitchen" to create your first one.
+                        </td>
+                      </tr>
+                    ) : (
+                      kitchens.map((k) => (
+                        <tr key={k.id} className="hover:bg-slate-800/40 transition-colors">
+                          <td className="px-4 py-3 font-bold text-white">{k.name}</td>
+                          <td className="px-4 py-3 text-slate-300 font-mono text-[11px]">
+                            {k.latitude.toFixed(4)}, {k.longitude.toFixed(4)}
+                          </td>
+                          <td className="px-4 py-3 text-slate-300">
+                            {k.openTime} - {k.closeTime}
+                          </td>
+                          <td className="px-4 py-3 font-bold text-amber-400">{k.radiusKm} km</td>
+                          <td className="px-4 py-3 text-slate-300">
+                            <div className="text-white font-medium">{k.operatorName}</div>
+                            <div className="text-[10px] text-slate-500 font-mono">{k.operatorPhone}</div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => handleToggleKitchenStatus(k.id, k.active)}
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-colors ${
+                                k.active
+                                  ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25"
+                                  : "bg-red-500/15 text-red-400 border-red-500/30 hover:bg-red-500/25"
+                              }`}
+                            >
+                              {k.active ? "Active" : "Paused"}
+                            </button>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  setKitchenDrawer("edit");
+                                  setEditingKitchen(k);
+                                }}
+                                className="text-xs font-bold px-2.5 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/25 hover:bg-blue-500/20 transition-colors"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => setKitchenDeleteConfirm(k.id)}
+                                className="text-xs font-bold px-2.5 py-1.5 rounded-lg bg-red-500/10 text-red-400 border border-red-500/25 hover:bg-red-500/20 transition-colors"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* ══════════════════════════════════════════════════════════════════
@@ -1414,7 +1638,7 @@ export default function AdminPage() {
                           ...editingPreset,
                           extras: [
                             ...(editingPreset.extras || []),
-                            { id: `ext-${Date.now()}`, name: "", priceKobo: 0 },
+                            { id: `ext-${Date.now()}`, name: "", priceKobo: 0, imageUrl: "" },
                           ],
                         })
                       }
@@ -1427,49 +1651,67 @@ export default function AdminPage() {
                   {(editingPreset.extras || []).length === 0 ? (
                     <p className="text-xs text-slate-600 italic">No extras configured yet.</p>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {(editingPreset.extras || []).map((extra, idx) => (
-                        <div key={extra.id || idx} className="flex items-center gap-2">
-                          <input
-                            type="text"
-                            placeholder="Extra name (e.g. Extra Egg)"
-                            value={extra.name}
-                            onChange={(e) => {
-                              const updated = [...(editingPreset.extras || [])];
-                              updated[idx] = { ...updated[idx], name: e.target.value };
-                              setEditingPreset({ ...editingPreset, extras: updated });
-                            }}
-                            className="flex-1 text-xs bg-slate-950 border border-slate-700 focus:border-amber-500 rounded-lg px-3 py-2 text-slate-100 outline-none"
-                          />
-                          <div className="flex flex-col gap-0.5 shrink-0">
-                            <div className="relative">
-                              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500 text-xs">₦</span>
-                              <input
-                                type="number"
-                                placeholder="0"
-                                min="0"
-                                step="any"
-                                value={extra.priceKobo ? extra.priceKobo / 100 : ""}
-                                onChange={(e) => {
-                                  const updated = [...(editingPreset.extras || [])];
-                                  // User enters naira → store as kobo (×100)
-                                  updated[idx] = { ...updated[idx], priceKobo: Math.round(Number(e.target.value) * 100) };
-                                  setEditingPreset({ ...editingPreset, extras: updated });
-                                }}
-                                className="w-24 text-xs bg-slate-950 border border-slate-700 focus:border-amber-500 rounded-lg pl-6 pr-2 py-2 text-slate-100 font-mono outline-none"
-                              />
+                        <div key={extra.id || idx} className="border border-slate-700 rounded-lg p-3 space-y-2 bg-slate-950/50">
+                          <div className="flex items-start gap-2">
+                            <input
+                              type="text"
+                              placeholder="Extra name (e.g. Extra Egg)"
+                              value={extra.name}
+                              onChange={(e) => {
+                                const updated = [...(editingPreset.extras || [])];
+                                updated[idx] = { ...updated[idx], name: e.target.value };
+                                setEditingPreset({ ...editingPreset, extras: updated });
+                              }}
+                              className="flex-1 text-xs bg-slate-950 border border-slate-700 focus:border-amber-500 rounded-lg px-3 py-2 text-slate-100 outline-none"
+                            />
+                            <div className="flex flex-col gap-0.5 shrink-0">
+                              <div className="relative">
+                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500 text-xs">₦</span>
+                                <input
+                                  type="number"
+                                  placeholder="0"
+                                  min="0"
+                                  step="any"
+                                  value={extra.priceKobo ? extra.priceKobo / 100 : ""}
+                                  onChange={(e) => {
+                                    const updated = [...(editingPreset.extras || [])];
+                                    // User enters naira → store as kobo (×100)
+                                    updated[idx] = { ...updated[idx], priceKobo: Math.round(Number(e.target.value) * 100) };
+                                    setEditingPreset({ ...editingPreset, extras: updated });
+                                  }}
+                                  className="w-24 text-xs bg-slate-950 border border-slate-700 focus:border-amber-500 rounded-lg pl-6 pr-2 py-2 text-slate-100 font-mono outline-none"
+                                />
+                              </div>
                             </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = (editingPreset.extras || []).filter((_, i) => i !== idx);
+                                setEditingPreset({ ...editingPreset, extras: updated });
+                              }}
+                              className="w-8 h-8 shrink-0 flex items-center justify-center bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/25 transition-colors"
+                            >
+                              ✕
+                            </button>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const updated = (editingPreset.extras || []).filter((_, i) => i !== idx);
-                              setEditingPreset({ ...editingPreset, extras: updated });
-                            }}
-                            className="w-8 h-8 shrink-0 flex items-center justify-center bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/25 transition-colors"
-                          >
-                            ✕
-                          </button>
+                          
+                          {/* Image URL field for extra */}
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] text-slate-500 font-semibold shrink-0">Image URL:</span>
+                            <input
+                              type="url"
+                              placeholder="https://example.com/extra-image.jpg (optional)"
+                              value={extra.imageUrl || ""}
+                              onChange={(e) => {
+                                const updated = [...(editingPreset.extras || [])];
+                                updated[idx] = { ...updated[idx], imageUrl: e.target.value };
+                                setEditingPreset({ ...editingPreset, extras: updated });
+                              }}
+                              className="flex-1 text-xs bg-slate-950 border border-slate-700 focus:border-amber-500 rounded-lg px-3 py-1.5 text-slate-100 outline-none"
+                            />
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1536,6 +1778,261 @@ export default function AdminPage() {
             </div>
           </div>
         </>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════
+          KITCHEN DRAWER (Add / Edit)
+      ══════════════════════════════════════════════════════════════════ */}
+      {kitchenDrawer !== "closed" && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+            onClick={() => setKitchenDrawer("closed")}
+          />
+          {/* Drawer */}
+          <div className="fixed inset-y-0 right-0 z-50 w-full max-w-2xl bg-slate-900 border-l border-slate-800 shadow-2xl flex flex-col overflow-y-auto">
+            {/* Drawer header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 shrink-0 sticky top-0 bg-slate-900 z-10">
+              <div>
+                <h2 className="font-black text-white text-lg">
+                  {kitchenDrawer === "create" ? "Add New Kitchen" : "Edit Kitchen"}
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {kitchenDrawer === "create"
+                    ? "Configure a new kitchen location"
+                    : `Editing: ${editingKitchen.name}`}
+                </p>
+              </div>
+              <button
+                onClick={() => setKitchenDrawer("closed")}
+                className="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 flex items-center justify-center text-sm transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSaveKitchen} className="p-6 space-y-5 flex-1">
+              {/* Kitchen Name */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+                  Kitchen Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editingKitchen.name || ""}
+                  onChange={(e) => setEditingKitchen({ ...editingKitchen, name: e.target.value })}
+                  placeholder="e.g., Meeshaai Kitchen - Abuja Wuse 2"
+                  className="w-full text-sm bg-slate-950 border border-slate-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/15 rounded-xl px-4 py-3 text-slate-100 outline-none transition-all"
+                />
+              </div>
+
+              {/* Geographic Coordinates */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+                    Latitude *
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    required
+                    value={editingKitchen.latitude || ""}
+                    onChange={(e) => setEditingKitchen({ ...editingKitchen, latitude: e.target.value })}
+                    placeholder="9.0765"
+                    className="w-full text-sm bg-slate-950 border border-slate-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/15 rounded-xl px-4 py-3 text-slate-100 font-mono outline-none transition-all"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+                    Longitude *
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    required
+                    value={editingKitchen.longitude || ""}
+                    onChange={(e) => setEditingKitchen({ ...editingKitchen, longitude: e.target.value })}
+                    placeholder="7.3986"
+                    className="w-full text-sm bg-slate-950 border border-slate-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/15 rounded-xl px-4 py-3 text-slate-100 font-mono outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Timezone */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+                  Timezone (IANA) *
+                </label>
+                <select
+                  required
+                  value={editingKitchen.timezone || "Africa/Lagos"}
+                  onChange={(e) => setEditingKitchen({ ...editingKitchen, timezone: e.target.value })}
+                  className="w-full text-sm bg-slate-950 border border-slate-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/15 rounded-xl px-4 py-3 text-slate-100 outline-none transition-all"
+                >
+                  <option value="Africa/Lagos">Africa/Lagos</option>
+                  <option value="Africa/Abuja">Africa/Abuja</option>
+                  <option value="Africa/Accra">Africa/Accra</option>
+                  <option value="Africa/Cairo">Africa/Cairo</option>
+                  <option value="Africa/Johannesburg">Africa/Johannesburg</option>
+                  <option value="Africa/Nairobi">Africa/Nairobi</option>
+                </select>
+              </div>
+
+              {/* Operating Hours */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+                    Opening Time (HH:MM:SS) *
+                  </label>
+                  <input
+                    type="time"
+                    step="1"
+                    required
+                    value={editingKitchen.openTime || ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setEditingKitchen({ ...editingKitchen, openTime: val.length === 5 ? val + ":00" : val });
+                    }}
+                    className="w-full text-sm bg-slate-950 border border-slate-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/15 rounded-xl px-4 py-3 text-slate-100 font-mono outline-none transition-all"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+                    Closing Time (HH:MM:SS) *
+                  </label>
+                  <input
+                    type="time"
+                    step="1"
+                    required
+                    value={editingKitchen.closeTime || ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setEditingKitchen({ ...editingKitchen, closeTime: val.length === 5 ? val + ":00" : val });
+                    }}
+                    className="w-full text-sm bg-slate-950 border border-slate-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/15 rounded-xl px-4 py-3 text-slate-100 font-mono outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Delivery Radius */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+                  Delivery Radius (km) *
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0.1"
+                  required
+                  value={editingKitchen.radiusKm || ""}
+                  onChange={(e) => setEditingKitchen({ ...editingKitchen, radiusKm: e.target.value })}
+                  placeholder="7.0"
+                  className="w-full text-sm bg-slate-950 border border-slate-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/15 rounded-xl px-4 py-3 text-slate-100 font-mono outline-none transition-all"
+                />
+                <p className="text-[11px] text-slate-500">
+                  Coverage area around the kitchen location
+                </p>
+              </div>
+
+              {/* Operator Details */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+                  Operator Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editingKitchen.operatorName || ""}
+                  onChange={(e) => setEditingKitchen({ ...editingKitchen, operatorName: e.target.value })}
+                  placeholder="e.g., Ibrahim Wuse Ops"
+                  className="w-full text-sm bg-slate-950 border border-slate-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/15 rounded-xl px-4 py-3 text-slate-100 outline-none transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+                  Operator Phone (E.164 format) *
+                </label>
+                <input
+                  type="tel"
+                  required
+                  value={editingKitchen.operatorPhone || ""}
+                  onChange={(e) => setEditingKitchen({ ...editingKitchen, operatorPhone: e.target.value })}
+                  placeholder="+2348012345678"
+                  className="w-full text-sm bg-slate-950 border border-slate-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/15 rounded-xl px-4 py-3 text-slate-100 font-mono outline-none transition-all"
+                />
+                <p className="text-[11px] text-slate-500">
+                  Must start with + and include country code (e.g., +234)
+                </p>
+              </div>
+
+              {/* Active Status */}
+              <div className="flex items-center gap-3 p-4 bg-slate-950 border border-slate-700 rounded-xl">
+                <input
+                  type="checkbox"
+                  id="kitchenActive"
+                  checked={editingKitchen.active ?? true}
+                  onChange={(e) => setEditingKitchen({ ...editingKitchen, active: e.target.checked })}
+                  className="w-5 h-5 rounded-lg border-2 border-slate-600 bg-slate-900 checked:bg-emerald-500 checked:border-emerald-500 transition-colors cursor-pointer"
+                />
+                <label htmlFor="kitchenActive" className="text-sm font-semibold text-white cursor-pointer">
+                  Kitchen is Active (accepting orders)
+                </label>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4 sticky bottom-0 bg-slate-900 border-t border-slate-800 -mx-6 px-6 pb-6">
+                <button
+                  type="button"
+                  onClick={() => setKitchenDrawer("closed")}
+                  className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-sm rounded-xl border border-slate-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={kitchenSaving}
+                  className="flex-1 py-3 bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-amber-500/25 transition-all"
+                >
+                  {kitchenSaving ? "Saving…" : kitchenDrawer === "create" ? "Create Kitchen" : "Update Kitchen"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════
+          KITCHEN DELETE CONFIRMATION
+      ══════════════════════════════════════════════════════════════════ */}
+      {kitchenDeleteConfirm !== null && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-5">
+            <div>
+              <h3 className="font-black text-white text-lg">Delete Kitchen?</h3>
+              <p className="text-sm text-slate-400 mt-2">
+                This action cannot be undone. All delivery zones and fee rules for this kitchen will be lost.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setKitchenDeleteConfirm(null)}
+                className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-sm rounded-xl border border-slate-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteKitchen(kitchenDeleteConfirm)}
+                className="flex-1 py-3 bg-red-500 hover:bg-red-400 text-white font-black text-sm rounded-xl shadow-lg shadow-red-500/25 transition-all"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ══════════════════════════════════════════════════════════════════

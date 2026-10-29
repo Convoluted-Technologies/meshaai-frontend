@@ -35,14 +35,14 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-xl font-bold text-slate-900 mb-3">1. Service Description</h2>
             <p>
-              Meshaai provides an on-demand food ordering and delivery platform that
+              Meeshaai provides an on-demand food ordering and delivery platform that
               enables customers to browse our curated menu of gourmet bread, egg, and
               sausage meals, customise their order with optional extras, and receive
               delivery to their specified location within our active delivery zones.
             </p>
             <p className="mt-3">
               These Terms of Service ("ToS") define the rules, obligations, and
-              expectations that apply to your use of the Meshaai platform. They
+              expectations that apply to your use of the Meeshaai platform. They
               complement our{" "}
               <Link href="/terms-and-conditions" className="text-amber-600 hover:underline font-medium">
                 Terms &amp; Conditions
@@ -120,7 +120,7 @@ export default function TermsOfServicePage() {
               <li>Scheduled downtime (notified in advance where possible).</li>
             </ul>
             <p className="text-sm mt-3">
-              Meshaai is not liable for any loss arising from inability to place an
+              Meeshaai is not liable for any loss arising from inability to place an
               order during paused periods.
             </p>
           </section>
@@ -128,7 +128,7 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-xl font-bold text-slate-900 mb-3">6. Delivery Riders</h2>
             <p className="text-sm">
-              Our dispatch riders are independent contractors or employees of Meshaai
+              Our dispatch riders are independent contractors or employees of Meeshaai
               Logistics. By placing an order, you consent to your contact details and
               delivery address being shared with the assigned rider for the purpose of
               completing your delivery.
@@ -143,13 +143,13 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-xl font-bold text-slate-900 mb-3">7. Food Safety &amp; Quality</h2>
             <p className="text-sm">
-              Meshaai is committed to food safety and prepares all meals fresh to order.
+              Meeshaai is committed to food safety and prepares all meals fresh to order.
               We operate in compliance with Abuja food safety regulations.
             </p>
             <ul className="list-disc list-inside space-y-1.5 text-sm mt-2">
               <li>All orders are prepared in our registered kitchen facilities.</li>
               <li>Meals are packaged in food-safe, tamper-evident containers.</li>
-              <li>Consume delivered food promptly. Meshaai is not responsible for food quality degradation due to delayed consumption after delivery.</li>
+              <li>Consume delivered food promptly. Meeshaai is not responsible for food quality degradation due to delayed consumption after delivery.</li>
               <li>If you have food allergies, please contact us before ordering. We cannot guarantee a fully allergen-free environment.</li>
             </ul>
           </section>
@@ -179,7 +179,7 @@ export default function TermsOfServicePage() {
               <li><strong>SMS Gateway</strong> — delivery of OTP codes. Message and data rates from your carrier may apply.</li>
             </ul>
             <p className="text-sm mt-3">
-              Meshaai is not responsible for the actions, policies, or availability of
+              Meeshaai is not responsible for the actions, policies, or availability of
               these third-party services.
             </p>
           </section>
@@ -188,7 +188,7 @@ export default function TermsOfServicePage() {
             <h2 className="text-xl font-bold text-slate-900 mb-3">10. Feedback &amp; Reviews</h2>
             <p className="text-sm">
               Any feedback, suggestions, or ideas you share with us become the property
-              of Meshaai. We may use them to improve our services without obligation to
+              of Meeshaai. We may use them to improve our services without obligation to
               compensate you.
             </p>
           </section>
@@ -204,7 +204,7 @@ export default function TermsOfServicePage() {
               <Link href="/privacy-policy" className="text-amber-600 hover:underline font-medium">
                 Privacy Policy
               </Link>
-              , constitute the entire agreement between you and Meshaai with respect to
+              , constitute the entire agreement between you and Meeshaai with respect to
               your use of the Service and supersede all prior discussions and agreements.
             </p>
           </section>
@@ -212,8 +212,8 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-xl font-bold text-slate-900 mb-3">12. Contact</h2>
             <div className="mt-3 p-4 bg-slate-50 rounded-2xl border border-slate-200 text-sm space-y-1">
-              <p className="font-semibold text-slate-900">Meshaai Customer Support</p>
-              <p>Email: <a href="mailto:support@meshaai.com" className="text-amber-600 hover:underline">support@meshaai.com</a></p>
+              <p className="font-semibold text-slate-900">Meeshaai Customer Support</p>
+              <p>Email: <a href="mailto:support@Meeshaai.com" className="text-amber-600 hover:underline">support@Meeshaai.com</a></p>
               <p>Address: Abuja, Nigeria</p>
             </div>
           </section>

@@ -18,7 +18,7 @@ export default function ApiDocsPage() {
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-800 pb-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
-            ⚡ Meshaai OpenAPI & Developer Specification
+            ⚡ Meeshaai OpenAPI & Developer Specification
           </h1>
           <p className="text-sm text-slate-400 mt-1">
             RFC 7807 Problem Details compliant endpoints for order lifecycle, payments, and admin controls.
@@ -27,7 +27,7 @@ export default function ApiDocsPage() {
 
         <a
           href="/api/postman.json"
-          download="meshaai_postman_collection.json"
+          download="Meeshaai_postman_collection.json"
           className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-amber-500/20 transition-all flex items-center gap-2"
         >
           <span>📥 Download Postman Collection</span>
@@ -44,7 +44,7 @@ export default function ApiDocsPage() {
         </p>
         <pre className="bg-slate-950 p-4 rounded-xl text-xs font-mono text-amber-300/90 overflow-x-auto border border-slate-800">
 {`{
-  "type": "https://meshaai.com/errors/invalid-order-payload",
+  "type": "https://Meeshaai.com/errors/invalid-order-payload",
   "title": "Invalid Order Request",
   "status": 400,
   "detail": "Phone, items array, and delivery location are required.",

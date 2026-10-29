@@ -32,16 +32,16 @@ export async function notifyCustomerOrderEvent(
   let message = '';
   switch (eventType) {
     case 'PAID':
-      message = `[Meshaai] Payment confirmed! Your order #${order.code} has been received and is being prepared.`;
+      message = `[Meeshaai] Payment confirmed! Your order #${order.code} has been received and is being prepared.`;
       break;
     case 'OUT_FOR_DELIVERY':
-      message = `[Meshaai] Good news! Order #${order.code} is out for delivery with rider ${order.rider?.name || 'our dispatch team'} (${order.rider?.phone || ''}). Give them code: ${order.deliveryProof?.code}`;
+      message = `[Meeshaai] Good news! Order #${order.code} is out for delivery with rider ${order.rider?.name || 'our dispatch team'} (${order.rider?.phone || ''}). Give them code: ${order.deliveryProof?.code}`;
       break;
     case 'DELIVERED':
-      message = `[Meshaai] Order #${order.code} has been delivered! Enjoy your meal. Thanks for choosing Meshaai!`;
+      message = `[Meeshaai] Order #${order.code} has been delivered! Enjoy your meal. Thanks for choosing Meeshaai!`;
       break;
     case 'CANCELLED':
-      message = `[Meshaai] Order #${order.code} was cancelled. If you paid, a refund has been initiated.`;
+      message = `[Meeshaai] Order #${order.code} was cancelled. If you paid, a refund has been initiated.`;
       break;
   }
 

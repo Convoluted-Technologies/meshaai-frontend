@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
         400,
         'Missing Transaction Reference',
         'txRef is required for re-verification',
-        'https://meshaai.com/errors/missing-tx-ref',
+        'https://Meeshaai.com/errors/missing-tx-ref',
         '/api/admin/payments/reverify'
       );
     }
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       400,
       'Re-verification Failed',
       err.message || 'Error re-verifying payment',
-      'https://meshaai.com/errors/reverify-failed',
+      'https://Meeshaai.com/errors/reverify-failed',
       '/api/admin/payments/reverify'
     );
   }

@@ -11,7 +11,7 @@ import { transitionOrderStatus } from '@/lib/orders';
 import { PaymentRecord, RefundRecord, Order } from '@/lib/types';
 
 const FLW_SECRET_KEY = process.env.FLW_SECRET_KEY || 'FLWSECK_TEST-mock-key';
-const FLW_SECRET_HASH = process.env.FLW_SECRET_HASH || 'meshaai-secret-hash';
+const FLW_SECRET_HASH = process.env.FLW_SECRET_HASH || 'Meeshaai-secret-hash';
 
 export function getSecretHash(): string {
   return FLW_SECRET_HASH;
@@ -53,12 +53,12 @@ export async function initializeFlutterwavePayment(
           redirect_url: redirectUrl,
           payment_options: 'card,banktransfer,ussd',
           customer: {
-            email: `${order.phone.replace(/[^0-9]/g, '')}@meshaai.com`,
+            email: `${order.phone.replace(/[^0-9]/g, '')}@Meeshaai.com`,
             phonenumber: order.phone,
             name: `Customer ${order.phone}`,
           },
           customizations: {
-            title: `Meshaai Order ${order.code}`,
+            title: `Meeshaai Order ${order.code}`,
             description: `Payment for bread & eggs preset order #${order.code}`,
             logo: `${baseUrl}/favicon.ico`,
           },

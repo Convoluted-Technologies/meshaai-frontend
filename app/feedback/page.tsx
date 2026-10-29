@@ -9,7 +9,6 @@ export default function FeedbackPage() {
   const [type, setType] = useState<FeedbackType>("general");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [orderCode, setOrderCode] = useState("");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
@@ -29,13 +28,8 @@ export default function FeedbackPage() {
     setError("");
     setSuccess(false);
 
-    if (!name || !message) {
+    if (!name || !email || !message) {
       setError("Please fill in all required fields.");
-      return;
-    }
-
-    if (!email && !phone) {
-      setError("Please provide either an email or phone number.");
       return;
     }
 
@@ -49,14 +43,13 @@ export default function FeedbackPage() {
       // const response = await fetch('/api/feedback', {
       //   method: 'POST',
       //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ type, name, email, phone, orderCode, subject, message }),
+      //   body: JSON.stringify({ type, name, email, orderCode, subject, message }),
       // });
 
       setSuccess(true);
       // Reset form
       setName("");
       setEmail("");
-      setPhone("");
       setOrderCode("");
       setSubject("");
       setMessage("");
@@ -121,10 +114,10 @@ export default function FeedbackPage() {
               Email Us
             </p>
             <a
-              href="mailto:support@meshaai.com"
+              href="mailto:support@Meeshaai.com"
               className="text-sm font-bold text-red-600 hover:text-red-700 block"
             >
-              support@meshaai.com
+              support@Meeshaai.com
             </a>
           </div>
           <div className="glass-panel p-5 text-center space-y-2 border-2 border-transparent hover:border-red-200 transition-all">
@@ -192,39 +185,21 @@ export default function FeedbackPage() {
             />
           </div>
 
-          {/* Contact Info */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-bold text-slate-700">
-                Email Address
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="john@example.com"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-red-500 focus:outline-none transition-colors"
-              />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="phone" className="block text-sm font-bold text-slate-700">
-                Phone Number
-              </label>
-              <input
-                id="phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="08012345678"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-red-500 focus:outline-none transition-colors"
-              />
-            </div>
+          {/* Email Address */}
+          <div className="space-y-2">
+            <label htmlFor="email" className="block text-sm font-bold text-slate-700">
+              Email Address <span className="text-red-600">*</span>
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="john@example.com"
+              required
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-red-500 focus:outline-none transition-colors"
+            />
           </div>
-
-          <p className="text-xs text-slate-500 -mt-3">
-            * Please provide at least one contact method (email or phone)
-          </p>
 
           {/* Order Code (Optional) */}
           <div className="space-y-2">
@@ -253,10 +228,14 @@ export default function FeedbackPage() {
               id="subject"
               type="text"
               value={subject}
-              onChange={(e) => setSubject(e.target.value)}
+              onChange={(e) => setSubject(e.target.value.slice(0, 150))}
               placeholder="Brief description of your feedback"
+              maxLength={150}
               className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-red-500 focus:outline-none transition-colors"
             />
+            <p className="text-xs text-slate-500">
+              {subject.length}/150 characters
+            </p>
           </div>
 
           {/* Message */}

@@ -4,7 +4,7 @@
  * Automatically logs in with service account credentials from env vars.
  */
 
-const BACKEND_URL = process.env.BACKEND_URL || 'https://meshaai-mainframe-744177391644.europe-west1.run.app';
+const BACKEND_URL = process.env.BACKEND_URL || 'https://Meeshaai-mainframe-744177391644.europe-west1.run.app';
 const ADMIN_EMAIL = process.env.BACKEND_ADMIN_EMAIL || process.env.BACKEND_ADMIN_USERNAME || '';
 const ADMIN_PASSWORD = process.env.BACKEND_ADMIN_PASSWORD || '';
 

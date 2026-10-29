@@ -6,7 +6,7 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 
 // ─── localStorage helpers ────────────────────────────────────────────────────
-const STORAGE_KEY = "meshaai_customer_v2";
+const STORAGE_KEY = "Meeshaai_customer_v2";
 
 interface SavedSession {
   token: string;

@@ -209,7 +209,7 @@ export function isPhoneBlocked(phone: string): boolean {
 
 export function getSettingsFromStore(): SystemSettings {
   const defaultSettings: SystemSettings = {
-    shopName: 'Meshaai Kitchen & Grill',
+    shopName: 'Meeshaai Kitchen & Grill',
     isOrderingPaused: false,
     operatingHours: { open: '06:30', close: '22:30', daysOfWeek: [0, 1, 2, 3, 4, 5, 6] },
     deliveryZone: { centerLat: 6.5244, centerLng: 3.3792, maxRadiusKm: 20.0 },

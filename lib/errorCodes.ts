@@ -17,7 +17,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   OTP_EXPIRED:              'Verification code has expired. Please request a new code.',
   OTP_LOCKED:               'Too many failed attempts. Your account is temporarily locked for 15 minutes.',
   RATE_LIMIT_EXCEEDED:      'Too many requests. Please wait a moment before trying again.',
-  CUSTOMER_BLOCKED:         'Your account has been restricted. Please contact Meshaai customer support.',
+  CUSTOMER_BLOCKED:         'Your account has been restricted. Please contact Meeshaai customer support.',
   SMS_DELIVERY_FAILED:      'Unable to send SMS at this moment. Please try again in 1 minute.',
 
   // Delivery / zone
@@ -70,7 +70,7 @@ export function resolveErrorMessage(
   if (mapped) return mapped;
   // Log unrecognised code for diagnostics
   if (code) {
-    console.warn(`[meshaai] Unrecognised error code: ${code}`, data);
+    console.warn(`[Meeshaai] Unrecognised error code: ${code}`, data);
   }
   return data.detail || data.message || data.title || fallback;
 }

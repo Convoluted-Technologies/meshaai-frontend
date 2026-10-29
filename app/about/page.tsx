@@ -59,7 +59,7 @@ export default function AboutPage() {
   ];
 
   const milestones = [
-    { year: "2026", event: "Meshaai Founded", description: "Started with a single kitchen in Abuja" },
+    { year: "2026", event: "Meeshaai Founded", description: "Started with a single kitchen in Abuja" },
     { year: "2026", event: "1000+ Orders", description: "Reached our first thousand happy customers" },
     { year: "2026", event: "Delivery Expansion", description: "Expanded coverage across Abuja metropolis" },
     { year: "2026", event: "Premium Menu", description: "Launched gourmet meal customization options" },
@@ -78,7 +78,7 @@ export default function AboutPage() {
             🍳
           </div>
           <h1 className="text-4xl sm:text-6xl font-black text-slate-900">
-            About Meshaai
+            About Meeshaai
           </h1>
           <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
             Elevating Abuja's beloved roadside bread and egg culture into a
@@ -94,7 +94,7 @@ export default function AboutPage() {
           </div>
           <div className="space-y-4 text-slate-700 text-lg leading-relaxed">
             <p>
-              Meshaai was born from a simple observation: Abuja's roadside bread
+              Meeshaai was born from a simple observation: Abuja's roadside bread
               and egg vendors serve some of the most delicious, comforting meals
               in the city. But accessing them often meant navigating traffic,
               unpredictable wait times, and varying quality standards.
@@ -105,7 +105,7 @@ export default function AboutPage() {
               and convenience?</strong>
             </p>
             <p>
-              Today, Meshaai combines the soul of traditional Nigerian street
+              Today, Meeshaai combines the soul of traditional Nigerian street
               food with modern food safety standards, premium ingredients, and
               reliable delivery. We've transformed a local favorite into a
               gourmet dining experience you can enjoy anywhere, anytime.
@@ -213,7 +213,7 @@ export default function AboutPage() {
           <div className="text-center space-y-3">
             <div className="text-5xl">🌟</div>
             <h2 className="text-3xl font-black text-slate-900">
-              Why Choose Meshaai?
+              Why Choose Meeshaai?
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
@@ -235,7 +235,7 @@ export default function AboutPage() {
         {/* CTA Section */}
         <div className="text-center space-y-6 py-8">
           <h2 className="text-3xl font-black text-slate-900">
-            Ready to Experience Meshaai?
+            Ready to Experience Meeshaai?
           </h2>
           <p className="text-slate-600 text-lg max-w-2xl mx-auto">
             Join thousands of satisfied customers enjoying premium bread and egg

@@ -7,7 +7,7 @@ import CookieBanner from "@/components/CookieBanner";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Meshaai - Elevate Your Taste Buds | Gourmet Roadside Bread & Eggs",
+  title: "Meeshaai - Elevate Your Taste Buds | Gourmet Roadside Bread & Eggs",
   description:
     "Order piping hot roadside bread & egg preset meals delivered fast with Flutterwave payment.",
 };
@@ -45,7 +45,7 @@ export default function RootLayout({
                     🍳
                   </div>
                   <div>
-                    <p className="text-base font-black text-white leading-none">Meshaai</p>
+                    <p className="text-base font-black text-white leading-none">Meeshaai</p>
                     <p className="text-[11px] text-slate-400 leading-none mt-0.5">Gourmet Bread &amp; Egg Dining</p>
                   </div>
                 </div>
@@ -116,8 +116,8 @@ export default function RootLayout({
                     </Link>
                   </li>
                   <li>
-                    <a href="mailto:support@meshaai.com" className="text-slate-300 hover:text-amber-400 transition-colors">
-                      support@meshaai.com
+                    <a href="mailto:support@meeshaai.com" className="text-slate-300 hover:text-amber-400 transition-colors">
+                      support@meeshaai.com
                     </a>
                   </li>
                 </ul>
@@ -127,7 +127,7 @@ export default function RootLayout({
             {/* Divider */}
             <div className="border-t border-slate-800">
               <div className="max-w-6xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-                <p>© 2026 Meshaai Gourmet Bread &amp; Egg Dining. All rights reserved.</p>
+                <p>© 2026 Meeshaai Gourmet Bread &amp; Egg Dining. All rights reserved.</p>
                 <div className="flex items-center gap-4">
                   <Link href="/about" className="hover:text-slate-300 transition-colors">About</Link>
                   <Link href="/faq" className="hover:text-slate-300 transition-colors">FAQ</Link>

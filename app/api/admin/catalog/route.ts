@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { backendFetch } from '@/lib/backend';
 import { getServerAdminToken } from '@/lib/backend-auth';
 
-const BACKEND_BASE = process.env.BACKEND_URL || 'https://meshaai-mainframe-744177391644.europe-west1.run.app';
+const BACKEND_BASE = process.env.BACKEND_URL || 'https://Meeshaai-mainframe-744177391644.europe-west1.run.app';
 
 function getAdminToken(req: NextRequest): string {
   return (

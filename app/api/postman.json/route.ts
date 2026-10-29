@@ -3,9 +3,9 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   const collection = {
     info: {
-      name: 'Meshaai API Collection',
+      name: 'Meeshaai API Collection',
       schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
-      description: 'Complete API collection for Meshaai bread & eggs ordering service.',
+      description: 'Complete API collection for Meeshaai bread & eggs ordering service.',
     },
     item: [
       {
@@ -99,7 +99,7 @@ export async function GET() {
 
   return NextResponse.json(collection, {
     headers: {
-      'Content-Disposition': 'attachment; filename="meshaai_postman_collection.json"',
+      'Content-Disposition': 'attachment; filename="Meeshaai_postman_collection.json"',
     },
   });
 }

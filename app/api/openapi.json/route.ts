@@ -4,7 +4,7 @@ export async function GET() {
   const openApiSpec = {
     openapi: '3.0.3',
     info: {
-      title: 'Meshaai Ordering Service API',
+      title: 'Meeshaai Ordering Service API',
       description: 'Lightweight meal ordering platform backend for roadside bread & egg preset meals with Flutterwave payments, location check, and admin controls.',
       version: '1.0.0',
     },

@@ -1,10 +1,10 @@
 import { RFCProblemDetails } from '@/lib/types';
 
 export const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || 'https://meshaai-mainframe-744177391644.europe-west1.run.app';
+  process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || 'https://Meeshaai-mainframe-744177391644.europe-west1.run.app';
 
-const ACCESS_TOKEN_KEY = 'meshaai_access_token';
-const REFRESH_TOKEN_KEY = 'meshaai_refresh_token';
+const ACCESS_TOKEN_KEY = 'Meeshaai_access_token';
+const REFRESH_TOKEN_KEY = 'Meeshaai_refresh_token';
 
 export function getStoredAccessToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -130,7 +130,7 @@ export async function backendFetch<T = any>(
     if (isJson) {
       const errData = await response.json();
       const problemDetails: RFCProblemDetails = {
-        type: errData.type || 'https://meshaai.com/errors/api-error',
+        type: errData.type || 'https://Meeshaai.com/errors/api-error',
         title: errData.title || 'Error',
         status: errData.status || response.status,
         detail: errData.detail || response.statusText,
@@ -143,7 +143,7 @@ export async function backendFetch<T = any>(
     } else {
       const text = await response.text();
       throw new APIError({
-        type: 'https://meshaai.com/errors/api-error',
+        type: 'https://Meeshaai.com/errors/api-error',
         title: response.statusText || 'HTTP Error',
         status: response.status,
         detail: text || `HTTP ${response.status} Error`,

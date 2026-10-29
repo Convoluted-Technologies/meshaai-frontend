@@ -5,7 +5,7 @@ import { useCart } from '@/context/CartContext';
 import { useRouter } from 'next/navigation';
 import { resolveErrorMessage } from '@/lib/errorCodes';
 
-const STORAGE_KEY = 'meshaai_user_v1';
+const STORAGE_KEY = 'Meeshaai_user_v1';
 
 interface SavedUser {
   name: string;

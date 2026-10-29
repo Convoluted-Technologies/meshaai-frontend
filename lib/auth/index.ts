@@ -88,7 +88,7 @@ export function linkGuestOrdersToCustomer(phone: string, customerId: string): nu
 }
 
 // Simple JWT / Token signer for demo/production without extra heavy native npm dependencies
-const JWT_SECRET = process.env.JWT_SECRET || 'meshaai-super-secret-jwt-key-2026';
+const JWT_SECRET = process.env.JWT_SECRET || 'Meeshaai-super-secret-jwt-key-2026';
 
 export function createAuthToken(payload: Record<string, any>): string {
   const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
@@ -115,7 +115,7 @@ const DEFAULT_ADMINS: AdminUser[] = [
   {
     id: 'admin_1',
     username: 'admin',
-    email: 'admin@meshaai.com',
+    email: 'admin@Meeshaai.com',
     role: 'SUPER_ADMIN',
     passwordHash: crypto.createHash('sha256').update('admin123').digest('hex'),
     createdAt: new Date().toISOString(),
@@ -123,7 +123,7 @@ const DEFAULT_ADMINS: AdminUser[] = [
   {
     id: 'admin_2',
     username: 'operator',
-    email: 'ops@meshaai.com',
+    email: 'ops@Meeshaai.com',
     role: 'OPS',
     passwordHash: crypto.createHash('sha256').update('ops123').digest('hex'),
     createdAt: new Date().toISOString(),

@@ -94,6 +94,11 @@ const faqs: FAQItem[] = [
     question: "What if my order is delayed?",
     answer: "We strive for timely delivery, but traffic and weather can cause delays. If your order is significantly delayed, please contact us through the feedback page. We may offer compensation or credits for your next order.",
   },
+  {
+    category: "Cancellations & Refunds",
+    question: "Where can I find the complete refund and cancellation policy?",
+    answer: "For detailed information about our refund policy, order lifecycle stages, and refund eligibility, please visit our comprehensive Refund & Cancellation Policy page.",
+  },
   
   // Account & Privacy
   {
@@ -243,6 +248,17 @@ export default function FAQPage() {
                   <div className="px-6 pb-5 pt-2 border-t border-slate-100 bg-slate-50/50">
                     <p className="text-slate-700 leading-relaxed">
                       {faq.answer}
+                      {faq.question === "Where can I find the complete refund and cancellation policy?" && (
+                        <span>
+                          {" "}
+                          <Link
+                            href="/refund-policy"
+                            className="text-red-600 hover:text-red-700 font-semibold underline inline-flex items-center gap-1"
+                          >
+                            View Full Policy →
+                          </Link>
+                        </span>
+                      )}
                     </p>
                   </div>
                 )}

@@ -125,6 +125,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     setLocationStatus('requesting');
+    
+    // Use getCurrentPosition with proper options for better mobile support
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
@@ -156,12 +158,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           // Delivery check failing is non-blocking — quote effect will handle errors
         }
       },
-      () => {
+      (error) => {
+        console.error('Location error:', error);
         setLocationStatus('denied');
         setLat(DEFAULT_LAT);
         setLng(DEFAULT_LNG);
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      { 
+        enableHighAccuracy: true, 
+        timeout: 15000, // Increased timeout for better mobile support
+        maximumAge: 0 // Don't use cached position
+      }
     );
   }, []);
 

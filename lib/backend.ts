@@ -1,12 +1,12 @@
 /**
  * lib/backend.ts
- * Central proxy client for the real Meshaai backend at meshaai-mainframe.onrender.com
+ * Central proxy client for the real Meeshaai backend at Meeshaai-mainframe.onrender.com
  * All Next.js API routes call this module instead of local lib/* functions.
  */
 
 import { PresetMeal, QuoteResponse, Order, OrderItem } from '@/lib/types';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'https://meshaai-mainframe-744177391644.europe-west1.run.app';
+const BACKEND_URL = process.env.BACKEND_URL || 'https://Meeshaai-mainframe-744177391644.europe-west1.run.app';
 
 // ── Passthrough proxy fetch ─────────────────────────────────────────────────
 

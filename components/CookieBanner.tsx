@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-const COOKIE_KEY = 'meshaai_cookie_consent';
+const COOKIE_KEY = 'Meeshaai_cookie_consent';
 
 export default function CookieBanner() {
   const [visible, setVisible] = useState(false);

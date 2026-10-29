@@ -89,13 +89,13 @@ export default function CartDrawer() {
                   requesting: {
                     icon: '📍', color: 'bg-amber-100 border-amber-300 text-amber-800',
                     title: 'Location Access Required',
-                    body: 'Please allow location access in your browser to calculate delivery fees and proceed to checkout.',
+                    body: 'Please allow location access to proceed with your order.',
                     action: null,
                   },
                   denied: {
                     icon: '🚫', color: 'bg-red-100 border-red-300 text-red-800',
                     title: 'Location Access Required',
-                    body: "We need your location to calculate delivery fees and ensure we can deliver to you. Please click 'Allow Location' to continue.",
+                    body: "We need your location to proceed. Please click 'Allow Location' to continue.",
                     action: { label: 'Allow Location', fn: requestLocation },
                   },
                   unavailable: {
@@ -224,7 +224,7 @@ export default function CartDrawer() {
                   {!quote && !quoteError && locationStatus === 'granted' && (
                     <div className="flex items-center gap-2 text-xs text-slate-400 py-1">
                       <span className="animate-pulse text-sm">⏳</span>
-                      <span>Calculating delivery fee…</span>
+                      <span>Processing your order...</span>
                     </div>
                   )}
                 </>
@@ -269,14 +269,14 @@ export default function CartDrawer() {
                       </p>
                     ) : (
                       <p className="text-slate-500">
-                        📍 Getting your location to calculate delivery fee…
+                        📍 Requesting your location...
                       </p>
                     )}
                   </div>
                 )}
                 {hasLocationGranted && !quote && !quoteError && (
                   <p className="text-center text-[11px] text-slate-400">
-                    Calculating delivery fee…
+                    Processing...
                   </p>
                 )}
               </div>
