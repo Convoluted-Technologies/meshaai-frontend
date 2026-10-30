@@ -145,69 +145,6 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Our Journey */}
-        <div className="space-y-8">
-          <div className="text-center space-y-3">
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-900">
-              Our Journey
-            </h2>
-            <p className="text-slate-600 text-lg max-w-2xl mx-auto">
-              From a single kitchen to serving thousands of happy customers
-              across Abuja.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {milestones.map((milestone, index) => (
-              <div
-                key={index}
-                className="glass-panel p-6 text-center space-y-2 border-2 border-amber-200 hover:border-red-300 transition-all"
-              >
-                <div className="text-3xl font-black text-red-600">
-                  {milestone.year}
-                </div>
-                <h3 className="text-lg font-bold text-slate-900">
-                  {milestone.event}
-                </h3>
-                <p className="text-sm text-slate-600">{milestone.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Meet the Team */}
-        {/* <div className="space-y-8">
-          <div className="text-center space-y-3">
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-900">
-              Meet the Team
-            </h2>
-            <p className="text-slate-600 text-lg max-w-2xl mx-auto">
-              Dedicated professionals working together to bring you the best
-              food experience.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {teamMembers.map((member, index) => (
-              <div
-                key={index}
-                className="glass-panel p-6 text-center space-y-3 hover:shadow-xl transition-all border-2 border-transparent hover:border-amber-300"
-              >
-                <div className="text-6xl">{member.icon}</div>
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900">
-                    {member.name}
-                  </h3>
-                  <p className="text-sm font-semibold text-red-600">
-                    {member.role}
-                  </p>
-                  <p className="text-xs text-slate-600 mt-1">
-                    {member.description}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div> */}
-
         {/* Why Choose Us */}
         <div className="glass-panel p-8 sm:p-12 space-y-6 border-2 border-red-200 bg-gradient-to-br from-red-50 to-orange-50">
           <div className="text-center space-y-3">
@@ -216,13 +153,10 @@ export default function AboutPage() {
               Why Choose Meeshaai?
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-center">
+            
             <div>
-              <div className="text-4xl font-black text-red-600 mb-2">5000+</div>
-              <p className="text-slate-700 font-semibold">Orders Delivered</p>
-            </div>
-            <div>
-              <div className="text-4xl font-black text-red-600 mb-2">30 min</div>
+              <div className="text-4xl font-black text-red-600 mb-2">17 min</div>
               <p className="text-slate-700 font-semibold">Average Delivery Time</p>
             </div>
             <div>
