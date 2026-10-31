@@ -21,9 +21,11 @@ export default function Navbar() {
 
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-red-600 via-amber-500 to-orange-500 flex items-center justify-center text-lg shadow-md shadow-red-600/30 group-hover:scale-110 transition-transform duration-300">
-            🍳
-          </div>
+          <img
+            src="/images/logo.png"
+            alt="Meeshaai logo"
+            className="w-9 h-9 rounded-xl object-cover shadow-md shadow-amber-500/30 group-hover:scale-110 transition-transform duration-300"
+          />
           <span className="font-black text-base sm:text-lg tracking-wider text-slate-900 uppercase group-hover:text-red-600 transition-colors">
             Meeshaai
           </span>

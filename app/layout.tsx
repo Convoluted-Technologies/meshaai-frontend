@@ -10,6 +10,11 @@ export const metadata: Metadata = {
   title: "Meeshaai - Elevate Your Taste Buds | Gourmet Roadside Bread & Eggs",
   description:
     "Order piping hot roadside bread & egg preset meals delivered fast with Flutterwave payment.",
+  icons: {
+    icon: "/images/logo.png",
+    shortcut: "/images/logo.png",
+    apple: "/images/logo.png",
+  },
 };
 
 export default function RootLayout({
@@ -41,9 +46,11 @@ export default function RootLayout({
               {/* Brand */}
               <div className="lg:col-span-2 space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center text-xl font-black shrink-0 shadow-lg shadow-amber-500/30">
-                    🍳
-                  </div>
+                  <img
+                    src="/images/logo.png"
+                    alt="Meeshaai logo"
+                    className="w-10 h-10 rounded-xl object-cover shadow-lg shadow-amber-500/30"
+                  />
                   <div>
                     <p className="text-base font-black text-white leading-none">Meeshaai</p>
                     <p className="text-[11px] text-slate-400 leading-none mt-0.5">Gourmet Bread &amp; Egg Dining</p>
