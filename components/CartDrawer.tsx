@@ -52,23 +52,6 @@ export default function CartDrawer() {
     setMapAddress('');
   }
 
-  // Try to re-request permission — if previously denied, open browser settings guide
-  function handleRetryLocation() {
-    // navigator.permissions lets us check state without prompting
-    if (navigator.permissions) {
-      navigator.permissions.query({ name: 'geolocation' as PermissionName }).then((result) => {
-        if (result.state === 'denied') {
-          // Can't re-prompt when denied — show map picker instead
-          setShowMapPicker(true);
-        } else {
-          requestLocation();
-        }
-      }).catch(() => requestLocation());
-    } else {
-      requestLocation();
-    }
-  }
-
   if (!isCartOpen && !isCheckoutOpen) return null;
 
   const cartEntries = Object.entries(cart).filter(([_, line]) => line.qty > 0);
@@ -259,23 +242,13 @@ export default function CartDrawer() {
                     <p className="text-xs text-red-600 font-semibold">⚠️ {mapError}</p>
                   )}
 
-                  <div className="flex gap-2">
-                    {locationStatus === 'denied' ? (
-                      <button
-                        onClick={handleRetryLocation}
-                        className="flex-1 py-2.5 bg-white border-2 border-amber-300 hover:border-amber-500 text-amber-800 text-xs font-bold rounded-xl transition-colors"
-                      >
-                        🔄 Retry GPS
-                      </button>
-                    ) : null}
-                    <button
-                      onClick={handleSetManualLocation}
-                      disabled={!mapLat || !mapLng}
-                      className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-black rounded-xl transition-colors"
-                    >
-                      ✓ Set Location
-                    </button>
-                  </div>
+                  <button
+                    onClick={handleSetManualLocation}
+                    disabled={!mapLat || !mapLng}
+                    className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-black rounded-xl transition-colors"
+                  >
+                    ✓ Set Location
+                  </button>
                 </div>
               )}
 
