@@ -38,7 +38,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-xl font-bold text-slate-900 mb-3">1. Introduction</h2>
             <p>
-              Welcome to Meeshaai ("we", "our", "us"). We operate a gourmet roadside
+              Welcome to Meeshaai ("we", "our", "us"). We operate a gourmet
               bread &amp; egg meal delivery service accessible at Meeshaai.com and
               through our mobile platforms. This Privacy Policy explains how we
               collect, use, disclose, and protect your personal information when you

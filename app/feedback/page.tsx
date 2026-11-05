@@ -28,7 +28,7 @@ export default function FeedbackPage() {
     setError("");
     setSuccess(false);
 
-    if (!name || !email || !message) {
+    if (!name.trim() || !email.trim() || !message.trim() || !subject.trim()) {
       setError("Please fill in all required fields.");
       return;
     }
@@ -36,29 +36,30 @@ export default function FeedbackPage() {
     setSubmitting(true);
 
     try {
-      // Simulate API call - replace with actual endpoint
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, name, email, orderCode, subject, message }),
+      });
 
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/feedback', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ type, name, email, orderCode, subject, message }),
-      // });
+      const data = await res.json();
 
-      setSuccess(true);
-      // Reset form
-      setName("");
-      setEmail("");
-      setOrderCode("");
-      setSubject("");
-      setMessage("");
-      setType("general");
-
-      // Scroll to success message
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (err: any) {
-      setError(err.message || "Failed to submit feedback. Please try again.");
+      if (res.ok || res.status === 201) {
+        setSuccess(true);
+        setName("");
+        setEmail("");
+        setOrderCode("");
+        setSubject("");
+        setMessage("");
+        setType("general");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else if (res.status === 429) {
+        setError("Too many submissions. Please wait a few minutes before trying again.");
+      } else {
+        setError(data.detail || "Failed to submit feedback. Please try again.");
+      }
+    } catch {
+      setError("Network error. Please check your connection and try again.");
     } finally {
       setSubmitting(false);
     }
@@ -114,10 +115,10 @@ export default function FeedbackPage() {
               Email Us
             </p>
             <a
-              href="mailto:support@Meeshaai.com"
+              href="mailto:hello.meeshaai@gmail.com"
               className="text-sm font-bold text-red-600 hover:text-red-700 block"
             >
-              support@Meeshaai.com
+              hello.meeshaai@gmail.com
             </a>
           </div>
           <div className="glass-panel p-5 text-center space-y-2 border-2 border-transparent hover:border-red-200 transition-all">
@@ -222,7 +223,7 @@ export default function FeedbackPage() {
           {/* Subject */}
           <div className="space-y-2">
             <label htmlFor="subject" className="block text-sm font-bold text-slate-700">
-              Subject
+              Subject <span className="text-red-600">*</span>
             </label>
             <input
               id="subject"
@@ -231,9 +232,10 @@ export default function FeedbackPage() {
               onChange={(e) => setSubject(e.target.value.slice(0, 150))}
               placeholder="Brief description of your feedback"
               maxLength={150}
+              required
               className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-red-500 focus:outline-none transition-colors"
             />
-            <p className="text-xs text-slate-500">
+            <p className={`text-xs ${subject.length >= 140 ? 'text-amber-600 font-semibold' : 'text-slate-500'}`}>
               {subject.length}/150 characters
             </p>
           </div>

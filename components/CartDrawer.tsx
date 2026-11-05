@@ -17,9 +17,57 @@ export default function CartDrawer() {
     formatNGN,
     locationStatus,
     requestLocation,
+    setLat,
+    setLng,
+    setAddress,
+    lat,
+    lng,
   } = useCart();
 
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [showMapPicker, setShowMapPicker] = useState(false);
+  const [mapLat, setMapLat] = useState('');
+  const [mapLng, setMapLng] = useState('');
+  const [mapAddress, setMapAddress] = useState('');
+  const [mapError, setMapError] = useState('');
+
+  function handleSetManualLocation() {
+    setMapError('');
+    const parsedLat = parseFloat(mapLat);
+    const parsedLng = parseFloat(mapLng);
+    if (isNaN(parsedLat) || parsedLat < -90 || parsedLat > 90) {
+      setMapError('Enter a valid latitude between -90 and 90.');
+      return;
+    }
+    if (isNaN(parsedLng) || parsedLng < -180 || parsedLng > 180) {
+      setMapError('Enter a valid longitude between -180 and 180.');
+      return;
+    }
+    setLat(parsedLat);
+    setLng(parsedLng);
+    if (mapAddress.trim()) setAddress(mapAddress.trim());
+    setShowMapPicker(false);
+    setMapLat('');
+    setMapLng('');
+    setMapAddress('');
+  }
+
+  // Try to re-request permission — if previously denied, open browser settings guide
+  function handleRetryLocation() {
+    // navigator.permissions lets us check state without prompting
+    if (navigator.permissions) {
+      navigator.permissions.query({ name: 'geolocation' as PermissionName }).then((result) => {
+        if (result.state === 'denied') {
+          // Can't re-prompt when denied — show map picker instead
+          setShowMapPicker(true);
+        } else {
+          requestLocation();
+        }
+      }).catch(() => requestLocation());
+    } else {
+      requestLocation();
+    }
+  }
 
   if (!isCartOpen && !isCheckoutOpen) return null;
 
@@ -37,7 +85,8 @@ export default function CartDrawer() {
   
   // Checkout ONLY enabled when user explicitly grants location access
   // The only allowed status is 'granted' (or 'out_of_zone' which means location was granted but outside zone)
-  const hasLocationGranted = locationStatus === 'granted' || locationStatus === 'out_of_zone';
+  // Also allow if manual lat/lng has been set (non-zero)
+  const hasLocationGranted = locationStatus === 'granted' || locationStatus === 'out_of_zone' || (lat !== 0 && lng !== 0);
   const canCheckout = cartEntries.length > 0 && !isOperationallyClosed && hasLocationGranted;
 
   function openCheckout() {
@@ -88,21 +137,21 @@ export default function CartDrawer() {
                 const cfg = {
                   requesting: {
                     icon: '📍', color: 'bg-amber-100 border-amber-300 text-amber-800',
-                    title: 'Location Access Required',
-                    body: 'Please allow location access to proceed with your order.',
+                    title: 'Requesting Location…',
+                    body: 'Please allow location access in the browser prompt to continue.',
                     action: null,
                   },
                   denied: {
                     icon: '🚫', color: 'bg-red-100 border-red-300 text-red-800',
-                    title: 'Location Access Required',
-                    body: "We need your location to proceed. Please click 'Allow Location' to continue.",
-                    action: { label: 'Allow Location', fn: requestLocation },
+                    title: 'Location Access Blocked',
+                    body: 'You previously denied location access. To re-enable: tap the 🔒 lock icon in your browser address bar → Site settings → Allow Location. Or pick your location manually below.',
+                    action: { label: 'Pick location manually →', fn: () => setShowMapPicker(true) },
                   },
                   unavailable: {
                     icon: '⚠️', color: 'bg-red-100 border-red-300 text-red-800',
-                    title: 'Location Required',
-                    body: 'Your browser doesn\'t support location services. Please use a modern browser with location support to place an order.',
-                    action: null,
+                    title: 'Location Unavailable',
+                    body: 'Your browser doesn\'t support location services. Pick your location manually below.',
+                    action: { label: 'Enter location manually →', fn: () => setShowMapPicker(true) },
                   },
                   out_of_zone: {
                     icon: '🌍', color: 'bg-orange-100 border-orange-300 text-orange-800',
@@ -125,7 +174,7 @@ export default function CartDrawer() {
                             onClick={c.action.fn} 
                             className="text-xs font-bold underline mt-2 hover:opacity-80 transition-opacity"
                           >
-                            {c.action.label} →
+                            {c.action.label}
                           </button>
                         )}
                       </div>
@@ -133,6 +182,102 @@ export default function CartDrawer() {
                   </div>
                 );
               })()}
+
+              {/* Manual location / map picker */}
+              {(locationStatus === 'idle' || locationStatus === 'granted' || locationStatus === 'out_of_zone') && !showMapPicker && cartEntries.length > 0 && (
+                <button
+                  onClick={() => setShowMapPicker(true)}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl border-2 border-dashed border-slate-300 hover:border-amber-400 hover:bg-amber-50 text-slate-600 hover:text-amber-700 transition-all text-sm font-semibold"
+                >
+                  <span className="text-xl">🗺️</span>
+                  <div className="text-left">
+                    <p className="font-bold text-sm">Select location from map</p>
+                    {lat && lng ? (
+                      <p className="text-xs opacity-70 font-mono">{lat.toFixed(5)}, {lng.toFixed(5)}</p>
+                    ) : (
+                      <p className="text-xs opacity-70">Enter your coordinates manually</p>
+                    )}
+                  </div>
+                  <span className="ml-auto text-lg">›</span>
+                </button>
+              )}
+
+              {/* Map picker panel */}
+              {showMapPicker && (
+                <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="font-black text-sm text-amber-900 flex items-center gap-2">
+                      <span>🗺️</span> Set Your Location
+                    </p>
+                    <button
+                      onClick={() => { setShowMapPicker(false); setMapError(''); }}
+                      className="text-amber-700 hover:text-amber-900 font-bold text-sm"
+                    >✕</button>
+                  </div>
+
+                  <p className="text-xs text-amber-800 leading-relaxed">
+                    Open <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" className="font-bold underline">Google Maps</a>, right-click your location → copy the coordinates, then paste them below.
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs font-bold text-amber-900 block mb-1">Latitude</label>
+                      <input
+                        type="number"
+                        step="any"
+                        placeholder="e.g. 9.0765"
+                        value={mapLat}
+                        onChange={(e) => setMapLat(e.target.value)}
+                        className="w-full text-xs px-3 py-2.5 rounded-xl border-2 border-amber-300 bg-white focus:border-amber-500 focus:outline-none font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-amber-900 block mb-1">Longitude</label>
+                      <input
+                        type="number"
+                        step="any"
+                        placeholder="e.g. 7.3986"
+                        value={mapLng}
+                        onChange={(e) => setMapLng(e.target.value)}
+                        className="w-full text-xs px-3 py-2.5 rounded-xl border-2 border-amber-300 bg-white focus:border-amber-500 focus:outline-none font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-amber-900 block mb-1">Address (optional)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Plot 12, Wuse Zone 5, Abuja"
+                      value={mapAddress}
+                      onChange={(e) => setMapAddress(e.target.value)}
+                      className="w-full text-xs px-3 py-2.5 rounded-xl border-2 border-amber-300 bg-white focus:border-amber-500 focus:outline-none"
+                    />
+                  </div>
+
+                  {mapError && (
+                    <p className="text-xs text-red-600 font-semibold">⚠️ {mapError}</p>
+                  )}
+
+                  <div className="flex gap-2">
+                    {locationStatus === 'denied' ? (
+                      <button
+                        onClick={handleRetryLocation}
+                        className="flex-1 py-2.5 bg-white border-2 border-amber-300 hover:border-amber-500 text-amber-800 text-xs font-bold rounded-xl transition-colors"
+                      >
+                        🔄 Retry GPS
+                      </button>
+                    ) : null}
+                    <button
+                      onClick={handleSetManualLocation}
+                      disabled={!mapLat || !mapLng}
+                      className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-black rounded-xl transition-colors"
+                    >
+                      ✓ Set Location
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {cartEntries.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-16">
@@ -257,16 +402,32 @@ export default function CartDrawer() {
                   <div className="text-center text-[11px] space-y-1">
                     {locationStatus === 'requesting' ? (
                       <p className="text-amber-600 font-semibold animate-pulse">
-                        ⏳ Please allow location access to continue
+                        ⏳ Please allow location access in the browser prompt
                       </p>
                     ) : locationStatus === 'denied' ? (
-                      <p className="text-red-600 font-semibold">
-                        🚫 Location access required. Please allow location to proceed.
-                      </p>
+                      <div className="space-y-1">
+                        <p className="text-red-600 font-semibold">
+                          🚫 Location blocked. Enable it in browser settings or —
+                        </p>
+                        <button
+                          onClick={() => setShowMapPicker(true)}
+                          className="text-amber-600 font-bold underline hover:text-amber-700 transition-colors"
+                        >
+                          enter location manually →
+                        </button>
+                      </div>
                     ) : locationStatus === 'unavailable' ? (
-                      <p className="text-red-600 font-semibold">
-                        ⚠️ Location services unavailable. Please use a browser with location support.
-                      </p>
+                      <div className="space-y-1">
+                        <p className="text-red-600 font-semibold">
+                          ⚠️ Location unavailable —
+                        </p>
+                        <button
+                          onClick={() => setShowMapPicker(true)}
+                          className="text-amber-600 font-bold underline hover:text-amber-700 transition-colors"
+                        >
+                          enter location manually →
+                        </button>
+                      </div>
                     ) : (
                       <p className="text-slate-500">
                         📍 Requesting your location...
