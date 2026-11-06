@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
         username: admin.fullName || admin.email || loginId,
         email: admin.email || loginId,
         role: admin.role || data.role || 'ADMIN',
+        kitchenId: admin.kitchenId || null,
         token,
       },
       token,

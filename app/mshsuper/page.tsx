@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Order,
   OrderStatus,
@@ -67,6 +68,7 @@ function StatCard({
 // ─── Main Component ──────────────────────────────────────────────────────────
 export default function AdminPage() {
   // ── Auth ──────────────────────────────────────────────────────────────────
+  const router = useRouter();
   const [loggedIn, setLoggedIn] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -76,7 +78,7 @@ export default function AdminPage() {
   const [adminUser, setAdminUser] = useState<any>(null);
 
   // ── Navigation ────────────────────────────────────────────────────────────
-  type Tab = "dashboard" | "orders" | "products" | "payments" | "customers" | "kitchens";
+  type Tab = "dashboard" | "orders" | "products" | "payments" | "customers" | "kitchens" | "users";
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
 
   // ── Data ──────────────────────────────────────────────────────────────────
@@ -117,6 +119,16 @@ export default function AdminPage() {
   const [kitchenSaving, setKitchenSaving] = useState(false);
   const [kitchenDeleteConfirm, setKitchenDeleteConfirm] = useState<number | null>(null);
 
+  // ── Users (OPS) UI ────────────────────────────────────────────────────────
+  const [opsUsers, setOpsUsers] = useState<any[]>([]);
+  const [userDrawer, setUserDrawer] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>({
+    fullName: "", email: "", role: "OPS", kitchenId: "", password: "",
+  });
+  const [userSaving, setUserSaving] = useState(false);
+  const [userDeactivateConfirm, setUserDeactivateConfirm] = useState<number | null>(null);
+  const [createdUserPassword, setCreatedUserPassword] = useState<string | null>(null);
+
   // ────────────────────────────────────────────────────────────────────────
   // Auth helpers
   // ────────────────────────────────────────────────────────────────────────
@@ -140,6 +152,14 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (res.ok && data.user) {
+        // OPS users go to their dedicated dashboard
+        if (data.user.role === "OPS") {
+          // Store token for OPS dashboard use
+          localStorage.setItem("ops_token", data.user.token);
+          localStorage.setItem("ops_user", JSON.stringify(data.user));
+          router.push("/ops");
+          return;
+        }
         setAdminUser(data.user);
         setLoggedIn(true);
       } else {
@@ -173,6 +193,7 @@ export default function AdminPage() {
     fetchCustomers();
     fetchDashboard();
     fetchKitchens();
+    fetchOpsUsers();
   }
 
   async function fetchOrders() {
@@ -216,6 +237,13 @@ export default function AdminPage() {
     if (!res) return;
     const data = await res.json().catch(() => ({}));
     if (data.kitchens) setKitchens(data.kitchens);
+  }
+
+  async function fetchOpsUsers() {
+    const res = await fetch("/api/admin/users", { headers: authHeaders() }).catch(() => null);
+    if (!res) return;
+    const data = await res.json().catch(() => ({}));
+    if (data.users) setOpsUsers(data.users);
   }
 
   // ────────────────────────────────────────────────────────────────────────
@@ -360,7 +388,8 @@ export default function AdminPage() {
   }
 
   async function handleToggleKitchenStatus(kitchenId: number, currentStatus: boolean) {
-    const res = await fetch(`/api/admin/kitchens/${kitchenId}/pause`, {
+    const newPaused = currentStatus; // if currently active, pause it; if paused, resume
+    const res = await fetch(`/api/admin/kitchens/${kitchenId}?paused=${newPaused}`, {
       method: "PATCH",
       headers: authHeaders(),
     });
@@ -478,6 +507,62 @@ export default function AdminPage() {
       fetchCatalog();
     } else {
       alert("Rollback failed");
+    }
+  }
+
+  // ────────────────────────────────────────────────────────────────────────
+  // OPS Users CRUD
+  // ────────────────────────────────────────────────────────────────────────
+  async function handleCreateOpsUser(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingUser.fullName?.trim()) { alert("Full name is required."); return; }
+    if (!editingUser.email?.trim()) { alert("Email is required."); return; }
+    if (editingUser.role === "OPS" && !editingUser.kitchenId) {
+      alert("OPS users must be assigned to a kitchen."); return;
+    }
+    setUserSaving(true);
+    const payload: any = {
+      fullName: editingUser.fullName.trim(),
+      email: editingUser.email.trim(),
+      role: editingUser.role,
+    };
+    if (editingUser.role === "OPS" && editingUser.kitchenId) {
+      payload.kitchenId = Number(editingUser.kitchenId);
+    }
+    if (editingUser.password?.trim()) {
+      payload.password = editingUser.password.trim();
+    }
+    const res = await fetch("/api/admin/users", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    setUserSaving(false);
+    if (res.ok) {
+      fetchOpsUsers();
+      setUserDrawer(false);
+      setEditingUser({ fullName: "", email: "", role: "OPS", kitchenId: "", password: "" });
+      // Show generated password if backend auto-generated one
+      if (data.user?.generatedPassword) {
+        setCreatedUserPassword(data.user.generatedPassword);
+      }
+    } else {
+      alert(data.detail || "Failed to create user");
+    }
+  }
+
+  async function handleDeactivateUser(userId: number) {
+    const res = await fetch(`/api/admin/users/${userId}`, {
+      method: "DELETE",
+      headers: authHeaders(),
+    });
+    if (res.ok) {
+      fetchOpsUsers();
+      setUserDeactivateConfirm(null);
+    } else {
+      const data = await res.json();
+      alert(data.detail || "Failed to deactivate user");
     }
   }
 
@@ -618,6 +703,7 @@ export default function AdminPage() {
     { id: "payments", icon: "💳", label: "Payments" },
     { id: "customers", icon: "👥", label: "Customers" },
     { id: "kitchens", icon: "🏪", label: "Kitchens" },
+    { id: "users", icon: "🔑", label: "Users" },
   ];
 
   return (
@@ -1423,6 +1509,100 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+
+        {/* ══════════════════════════════════════════════════════════════════
+            TAB: USERS (OPS Management)
+        ══════════════════════════════════════════════════════════════════ */}
+        {activeTab === "users" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-black text-white">Users</h1>
+                <p className="text-sm text-slate-400 mt-1">
+                  {opsUsers.length} user{opsUsers.length !== 1 ? "s" : ""} · OPS operators and admins
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setEditingUser({ fullName: "", email: "", role: "OPS", kitchenId: "", password: "" });
+                  setUserDrawer(true);
+                }}
+                className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-sm font-bold rounded-xl transition-colors flex items-center gap-2"
+              >
+                <span>➕</span>
+                <span>Add User</span>
+              </button>
+            </div>
+
+            <div className="rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="border-b border-slate-800">
+                    <tr className="text-[10px] uppercase tracking-wider text-slate-500">
+                      <th className="px-4 py-3 font-semibold">Name</th>
+                      <th className="px-4 py-3 font-semibold">Email</th>
+                      <th className="px-4 py-3 font-semibold">Role</th>
+                      <th className="px-4 py-3 font-semibold">Kitchen</th>
+                      <th className="px-4 py-3 font-semibold">Status</th>
+                      <th className="px-4 py-3 font-semibold">Created</th>
+                      <th className="px-4 py-3 font-semibold">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {opsUsers.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-4 py-10 text-center text-slate-500 italic">
+                          No users found. Click "Add User" to create an OPS operator.
+                        </td>
+                      </tr>
+                    ) : (
+                      opsUsers.map((u) => (
+                        <tr key={u.id} className="hover:bg-slate-800/40 transition-colors">
+                          <td className="px-4 py-3 font-bold text-white">{u.fullName}</td>
+                          <td className="px-4 py-3 text-slate-300 font-mono text-[11px]">{u.email}</td>
+                          <td className="px-4 py-3">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                              u.role === "SUPER_ADMIN"
+                                ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
+                                : "bg-blue-500/15 text-blue-400 border-blue-500/30"
+                            }`}>
+                              {u.role === "SUPER_ADMIN" ? "Super Admin" : "OPS"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-slate-300">
+                            {u.kitchenName || (u.kitchenId ? `Kitchen #${u.kitchenId}` : <span className="text-slate-600 italic">—</span>)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                              u.active !== false
+                                ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                                : "bg-red-500/15 text-red-400 border-red-500/30"
+                            }`}>
+                              {u.active !== false ? "Active" : "Inactive"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-slate-500 text-[11px]">
+                            {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "—"}
+                          </td>
+                          <td className="px-4 py-3">
+                            {u.active !== false && (
+                              <button
+                                onClick={() => setUserDeactivateConfirm(u.id)}
+                                className="text-xs font-bold px-2.5 py-1.5 rounded-lg bg-red-500/10 text-red-400 border border-red-500/25 hover:bg-red-500/20 transition-colors"
+                              >
+                                Deactivate
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* ══════════════════════════════════════════════════════════════════
@@ -2031,6 +2211,157 @@ export default function AdminPage() {
                 Delete
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════
+          USER DRAWER (Create OPS / Admin)
+      ══════════════════════════════════════════════════════════════════ */}
+      {userDrawer && (
+        <>
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" onClick={() => setUserDrawer(false)} />
+          <div className="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-slate-900 border-l border-slate-800 shadow-2xl flex flex-col overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 shrink-0 sticky top-0 bg-slate-900 z-10">
+              <div>
+                <h2 className="font-black text-white text-lg">Add New User</h2>
+                <p className="text-xs text-slate-400 mt-0.5">Create an OPS operator or Super Admin account</p>
+              </div>
+              <button onClick={() => setUserDrawer(false)} className="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 flex items-center justify-center text-sm transition-colors">✕</button>
+            </div>
+
+            <form onSubmit={handleCreateOpsUser} className="p-6 space-y-5 flex-1">
+              {/* Role */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Role *</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {[{ val: "OPS", label: "🏪 OPS Operator", desc: "Kitchen-scoped access" }, { val: "SUPER_ADMIN", label: "⚡ Super Admin", desc: "Full platform access" }].map((r) => (
+                    <button
+                      key={r.val}
+                      type="button"
+                      onClick={() => setEditingUser({ ...editingUser, role: r.val })}
+                      className={`p-3 rounded-xl border-2 text-left transition-all ${editingUser.role === r.val ? "border-amber-500 bg-amber-500/10" : "border-slate-700 hover:border-slate-600"}`}
+                    >
+                      <p className="text-sm font-bold text-white">{r.label}</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">{r.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Full Name */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Full Name *</label>
+                <input
+                  type="text" required
+                  value={editingUser.fullName}
+                  onChange={(e) => setEditingUser({ ...editingUser, fullName: e.target.value })}
+                  placeholder="e.g. Ibrahim Wuse"
+                  className="w-full text-sm bg-slate-950 border border-slate-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/15 rounded-xl px-4 py-3 text-slate-100 outline-none transition-all"
+                />
+              </div>
+
+              {/* Email */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Email Address *</label>
+                <input
+                  type="email" required
+                  value={editingUser.email}
+                  onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
+                  placeholder="operator@kitchen.com"
+                  className="w-full text-sm bg-slate-950 border border-slate-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/15 rounded-xl px-4 py-3 text-slate-100 outline-none transition-all"
+                />
+              </div>
+
+              {/* Kitchen (OPS only) */}
+              {editingUser.role === "OPS" && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Assigned Kitchen *</label>
+                  <select
+                    required
+                    value={editingUser.kitchenId}
+                    onChange={(e) => setEditingUser({ ...editingUser, kitchenId: e.target.value })}
+                    className="w-full text-sm bg-slate-950 border border-slate-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/15 rounded-xl px-4 py-3 text-slate-100 outline-none transition-all"
+                  >
+                    <option value="">Select a kitchen…</option>
+                    {kitchens.map((k) => (
+                      <option key={k.id} value={k.id}>{k.name}</option>
+                    ))}
+                  </select>
+                  {kitchens.length === 0 && (
+                    <p className="text-[11px] text-amber-500">⚠️ No kitchens found. Create a kitchen first in the Kitchens tab.</p>
+                  )}
+                </div>
+              )}
+
+              {/* Password (optional) */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+                  Password <span className="text-slate-600 normal-case font-normal">(leave blank to auto-generate)</span>
+                </label>
+                <input
+                  type="text"
+                  value={editingUser.password}
+                  onChange={(e) => setEditingUser({ ...editingUser, password: e.target.value })}
+                  placeholder="Auto-generate if empty"
+                  className="w-full text-sm bg-slate-950 border border-slate-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/15 rounded-xl px-4 py-3 text-slate-100 font-mono outline-none transition-all"
+                />
+                <p className="text-[11px] text-slate-500">If left blank, a secure password will be generated and shown once after creation.</p>
+              </div>
+
+              {/* Submit */}
+              <div className="flex gap-3 pt-4 sticky bottom-0 bg-slate-900 border-t border-slate-800 -mx-6 px-6 pb-6">
+                <button type="button" onClick={() => setUserDrawer(false)} className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-sm rounded-xl border border-slate-700 transition-colors">Cancel</button>
+                <button type="submit" disabled={userSaving} className="flex-1 py-3 bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-amber-500/25 transition-all">
+                  {userSaving ? "Creating…" : "Create User"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════
+          USER DEACTIVATE CONFIRMATION
+      ══════════════════════════════════════════════════════════════════ */}
+      {userDeactivateConfirm !== null && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-5">
+            <div>
+              <h3 className="font-black text-white text-lg">Deactivate User?</h3>
+              <p className="text-sm text-slate-400 mt-2">This will immediately invalidate their active sessions and block access. This action can only be reversed by the backend team.</p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setUserDeactivateConfirm(null)} className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-sm rounded-xl border border-slate-700 transition-colors">Cancel</button>
+              <button onClick={() => handleDeactivateUser(userDeactivateConfirm)} className="flex-1 py-3 bg-red-500 hover:bg-red-400 text-white font-black text-sm rounded-xl shadow-lg shadow-red-500/25 transition-all">Deactivate</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════
+          GENERATED PASSWORD MODAL
+      ══════════════════════════════════════════════════════════════════ */}
+      {createdUserPassword && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-amber-500/30 rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-5">
+            <div>
+              <h3 className="font-black text-white text-lg">🔑 User Created!</h3>
+              <p className="text-sm text-slate-400 mt-2">Share this auto-generated password with the operator. <strong className="text-amber-400">It will not be shown again.</strong></p>
+            </div>
+            <div className="bg-slate-950 border border-slate-700 rounded-xl p-4">
+              <p className="text-xs text-slate-500 mb-1 uppercase tracking-wider font-semibold">Generated Password</p>
+              <p className="font-mono text-amber-400 text-lg font-bold tracking-wider break-all">{createdUserPassword}</p>
+            </div>
+            <button
+              onClick={() => {
+                navigator.clipboard?.writeText(createdUserPassword);
+                setCreatedUserPassword(null);
+              }}
+              className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm rounded-xl transition-all"
+            >
+              📋 Copy & Close
+            </button>
           </div>
         </div>
       )}
