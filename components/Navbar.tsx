@@ -65,12 +65,12 @@ export default function Navbar() {
             <motion.div
               whileHover={{ scale: 1.08, rotate: 3 }}
               whileTap={{ scale: 0.95 }}
-              className="w-9 h-9 rounded-full flex items-center justify-center transition-colors"
+              className="w-9 h-9 flex items-center justify-center transition-colors"
             >
               <img
                 src="/images/logo.png"
                 alt="Meeshaai Logo"
-                className="w-9 h-9 rounded-md object-cover"
+                className="w-9 h-9 rounded-lg object-cover"
               />
             </motion.div>
             <span className="font-extrabold text-xl sm:text-2xl tracking-tight text-slate-900 group-hover:text-[#e31b23] transition-colors">
