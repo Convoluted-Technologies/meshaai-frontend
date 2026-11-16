@@ -5,6 +5,43 @@ export const BACKEND_URL =
 
 const ACCESS_TOKEN_KEY = 'Meeshaai_access_token';
 const REFRESH_TOKEN_KEY = 'Meeshaai_refresh_token';
+const CUSTOMER_SESSION_KEY = 'Meeshaai_customer_session';
+
+export interface CustomerSession {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  token: string;
+  address?: string;
+  landmark?: string;
+}
+
+export function getStoredCustomerSession(): CustomerSession | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(CUSTOMER_SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function storeCustomerSession(customer: Partial<CustomerSession>) {
+  if (typeof window === 'undefined') return;
+  const existing = getStoredCustomerSession() || { id: '', name: '', phone: '', token: '' };
+  const updated = { ...existing, ...customer };
+  localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(updated));
+  if (customer.token) {
+    localStorage.setItem(ACCESS_TOKEN_KEY, customer.token);
+  }
+}
+
+export function clearCustomerSession() {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(CUSTOMER_SESSION_KEY);
+  clearAuthTokens();
+}
 
 export function getStoredAccessToken(): string | null {
   if (typeof window === 'undefined') return null;

@@ -34,11 +34,20 @@ export async function POST(req: NextRequest) {
     }));
 
     const backendBody = { lines, latitude: lat, longitude: lng };
+    const currency = (body as any).currency;
+    const path = currency ? `/orders/quote?currency=${currency}` : '/orders/quote';
 
-    const res = await backendFetch('/orders/quote', {
+    // Forward geo-IP headers if present
+    const extraHeaders: Record<string, string> = {};
+    const cfCountry = req.headers.get('CF-IPCountry');
+    const xCountry = req.headers.get('X-Country-Code');
+    if (cfCountry) extraHeaders['CF-IPCountry'] = cfCountry;
+    if (xCountry) extraHeaders['X-Country-Code'] = xCountry;
+
+    const res = await backendFetch(path, {
       method: 'POST',
       body: JSON.stringify(backendBody),
-    });
+    }, extraHeaders);
 
     const raw = await res.json();
 

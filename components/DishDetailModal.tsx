@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function DishDetailModal({ preset, onClose }: Props) {
-  const { addToCart, cart, formatNGN } = useCart();
+  const { addToCart, cart, formatPrice } = useCart();
   const [selectedExtras, setSelectedExtras] = useState<SelectedExtra[]>([]);
   const [qty, setQty] = useState(1);
 
@@ -29,11 +29,11 @@ export default function DishDetailModal({ preset, onClose }: Props) {
 
   if (!preset) return null;
 
-  const toggleExtra = (extra: { id: string; name: string; priceKobo: number }) => {
+  const toggleExtra = (extra: { id: string; name: string; priceKobo: number; priceFormatted?: string }) => {
     setSelectedExtras((prev) => {
       const idx = prev.findIndex((e) => e.extraId === extra.id);
       if (idx >= 0) return prev.filter((e) => e.extraId !== extra.id);
-      return [...prev, { extraId: extra.id, name: extra.name, priceKobo: extra.priceKobo }];
+      return [...prev, { extraId: extra.id, name: extra.name, priceKobo: extra.priceKobo, priceFormatted: extra.priceFormatted }];
     });
   };
 
@@ -77,7 +77,7 @@ export default function DishDetailModal({ preset, onClose }: Props) {
           </button>
           {/* Price badge */}
           <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-red-200 font-black text-amber-600 text-sm shadow-md">
-            {formatNGN(preset.priceKobo)}
+            {preset.priceFormatted || formatPrice(preset.priceKobo)}
           </div>
         </div>
 
@@ -154,7 +154,7 @@ export default function DishDetailModal({ preset, onClose }: Props) {
                         </span>
                       </div>
                       <span className={`text-xs font-black ml-2 flex-shrink-0 ${selected ? 'text-red-600' : 'text-slate-500'}`}>
-                        +{formatNGN(extra.priceKobo)}
+                        +{extra.priceFormatted || formatPrice(extra.priceKobo)}
                       </span>
                     </button>
                   );
@@ -185,10 +185,10 @@ export default function DishDetailModal({ preset, onClose }: Props) {
             </div>
             <div className="text-right">
               <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Total</p>
-              <p className="text-2xl font-black text-slate-900 mt-0.5">{formatNGN(grandTotal)}</p>
+              <p className="text-2xl font-black text-slate-900 mt-0.5">{formatPrice(grandTotal)}</p>
               {selectedExtras.length > 0 && (
                 <p className="text-[11px] text-red-500 font-semibold mt-0.5">
-                  Incl. {formatNGN(extrasTotalKobo * qty)} extras
+                  Incl. {formatPrice(extrasTotalKobo * qty)} extras
                 </p>
               )}
             </div>
@@ -203,7 +203,7 @@ export default function DishDetailModal({ preset, onClose }: Props) {
             {preset.isAvailable ? (
               <>
                 <span>🛒</span>
-                <span>Add to Cart — {formatNGN(grandTotal)}</span>
+                <span>Add to Cart — {formatPrice(grandTotal)}</span>
               </>
             ) : (
               <span>Currently Sold Out</span>

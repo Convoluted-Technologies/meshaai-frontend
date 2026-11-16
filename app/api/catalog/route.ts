@@ -4,8 +4,8 @@ import { backendFetch, adaptCatalog } from "@/lib/backend";
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const currency = searchParams.get("currency") || "";
-    const path = currency ? `/catalog?currency=${currency}` : "/catalog";
+    const requestedCurrency = searchParams.get("currency") || "";
+    const path = requestedCurrency ? `/catalog?currency=${requestedCurrency}` : "/catalog";
 
     // Forward geo-IP headers if present (Cloudflare CDN headers)
     const extraHeaders: Record<string, string> = {};
@@ -27,8 +27,8 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const { presets } = adaptCatalog(raw);
-    return NextResponse.json({ success: true, presets, count: presets.length });
+    const { presets, currency } = adaptCatalog(raw);
+    return NextResponse.json({ success: true, presets, currency, count: presets.length });
   } catch (err: any) {
     console.error("[catalog] error:", err);
     return NextResponse.json(

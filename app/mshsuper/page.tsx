@@ -66,6 +66,8 @@ function StatCard({
 }
 
 // ─── Main Component ──────────────────────────────────────────────────────────
+const ADMIN_STORAGE_KEY = "Meeshaai_admin_session";
+
 export default function AdminPage() {
   // ── Auth ──────────────────────────────────────────────────────────────────
   const router = useRouter();
@@ -76,6 +78,20 @@ export default function AdminPage() {
   const [loginError, setLoginError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
   const [adminUser, setAdminUser] = useState<any>(null);
+
+  // Restore session from localStorage on mount so refresh doesn't log admin out
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(ADMIN_STORAGE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (saved && (saved.token || saved.email)) {
+          setAdminUser(saved);
+          setLoggedIn(true);
+        }
+      }
+    } catch {}
+  }, []);
 
   // ── Navigation ────────────────────────────────────────────────────────────
   type Tab = "dashboard" | "orders" | "products" | "payments" | "customers" | "kitchens" | "users";
@@ -160,6 +176,10 @@ export default function AdminPage() {
           router.push("/ops");
           return;
         }
+        // Persist admin session so refresh does not log admin out
+        try {
+          localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(data.user));
+        } catch {}
         setAdminUser(data.user);
         setLoggedIn(true);
       } else {
@@ -751,7 +771,13 @@ export default function AdminPage() {
               {adminUser?.role || "ADMIN"}
             </span>
             <button
-              onClick={() => { setLoggedIn(false); setAdminUser(null); }}
+              onClick={() => {
+                try {
+                  localStorage.removeItem(ADMIN_STORAGE_KEY);
+                } catch {}
+                setLoggedIn(false);
+                setAdminUser(null);
+              }}
               className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition-colors"
             >
               Sign Out

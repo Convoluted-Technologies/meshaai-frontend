@@ -162,8 +162,9 @@ export interface BackendQuoteResponse {
  * Adapt backend CatalogResponse → { presets: PresetMeal[], quoteId? }
  * Maps price.amountMinor → priceKobo, modifiers → extras
  */
-export function adaptCatalog(raw: BackendCatalogResponse): { presets: PresetMeal[] } {
+export function adaptCatalog(raw: BackendCatalogResponse): { presets: PresetMeal[]; currency: string } {
   const now = new Date().toISOString();
+  const topCurrency = raw.currency || 'NGN';
   const presets: PresetMeal[] = (raw.presets || [])
     .filter((p) => !p.archived)
     .map((p) => ({
@@ -172,6 +173,8 @@ export function adaptCatalog(raw: BackendCatalogResponse): { presets: PresetMeal
       description: p.description || '',
       components: p.components || [],
       priceKobo: p.price?.amountMinor ?? p.basePrice ?? 0,
+      priceFormatted: p.price?.formatted ?? `₦${((p.price?.amountMinor ?? p.basePrice ?? 0) / 100).toLocaleString()}`,
+      currencyCode: p.price?.currency ?? topCurrency,
       imageUrl: p.imageUrl || '',
       isAvailable: !p.archived,
       extras: (p.modifiers || [])
@@ -180,11 +183,12 @@ export function adaptCatalog(raw: BackendCatalogResponse): { presets: PresetMeal
           id: m.id,
           name: m.name,
           priceKobo: m.unitPrice?.amountMinor ?? 0,
+          priceFormatted: m.unitPrice?.formatted ?? `₦${((m.unitPrice?.amountMinor ?? 0) / 100).toLocaleString()}`,
         })),
       createdAt: now,
       updatedAt: now,
     }));
-  return { presets };
+  return { presets, currency: topCurrency };
 }
 
 /**
@@ -257,10 +261,15 @@ export function adaptQuote(raw: BackendQuoteResponse): QuoteResponse & { quoteId
         0
       ),
       totalKobo: l.subtotal?.amountMinor ?? 0,
+      totalFormatted: l.subtotal?.formatted,
     })),
     subtotalKobo: raw.subtotal?.amountMinor ?? 0,
     deliveryFeeKobo: raw.deliveryFee?.amountMinor ?? 0,
     grandTotalKobo: raw.total?.amountMinor ?? 0,
+    subtotalFormatted: raw.subtotal?.formatted,
+    deliveryFeeFormatted: raw.deliveryFee?.formatted,
+    grandTotalFormatted: raw.total?.formatted,
+    currency: raw.total?.currency,
     deliveryDistanceKm: raw.deliveryDistanceKm,
     isWithinZone: raw.isWithinZone ?? true,
     zoneMessage: raw.zoneMessage,

@@ -4,6 +4,7 @@ import { CartProvider } from "@/context/CartContext";
 import CartDrawer from "@/components/CartDrawer";
 import FoodCursor from "@/components/FoodCursor";
 import CookieBanner from "@/components/CookieBanner";
+import FloatingCartButton from "@/components/FloatingCartButton";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -35,13 +36,16 @@ export default function RootLayout({
           {/* Slide-over Cart Drawer */}
           <CartDrawer />
 
+          {/* Floating Cart Button matching reference */}
+          <FloatingCartButton />
+
           {/* Cookie consent banner */}
           <CookieBanner />
 
           {/* ── Footer ────────────────────────────────────────────────────── */}
           <footer className="bg-slate-950 text-white mt-16">
             {/* Top section */}
-            <div className="max-w-6xl mx-auto px-6 pt-14 pb-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+            <div className="w-full px-6 sm:px-10 lg:px-16 pt-14 pb-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
 
               {/* Brand */}
               <div className="lg:col-span-2 space-y-4">
@@ -158,7 +162,7 @@ export default function RootLayout({
 
             {/* Divider */}
             <div className="border-t border-slate-800">
-              <div className="max-w-6xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+              <div className="w-full px-6 sm:px-10 lg:px-16 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
                 <p>© 2026 Meeshaai Gourmet Bread &amp; Egg Dining. All rights reserved.</p>
                 <div className="flex items-center gap-4">
                   <Link href="/about" className="hover:text-slate-300 transition-colors">About</Link>

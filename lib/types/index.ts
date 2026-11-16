@@ -16,6 +16,7 @@ export interface PresetExtra {
   id: string;
   name: string;
   priceKobo: number;
+  priceFormatted?: string;   // e.g. "£1.20" — straight from backend
   imageUrl?: string;
 }
 
@@ -23,6 +24,7 @@ export interface SelectedExtra {
   extraId: string;
   name: string;
   priceKobo: number;
+  priceFormatted?: string;
 }
 
 export interface PresetMeal {
@@ -32,6 +34,8 @@ export interface PresetMeal {
   components: string[];
   extras?: PresetExtra[];
   priceKobo: number;
+  priceFormatted?: string;   // e.g. "£3.50" — straight from backend, always correct currency
+  currencyCode?: string;     // e.g. "GBP"
   imageUrl: string;
   isAvailable: boolean;
   createdAt: string;
@@ -209,10 +213,15 @@ export interface QuoteResponse {
     extras?: SelectedExtra[];
     extrasTotalKobo: number;
     totalKobo: number;
+    totalFormatted?: string;
   }>;
   subtotalKobo: number;
   deliveryFeeKobo: number;
   grandTotalKobo: number;
+  subtotalFormatted?: string;
+  deliveryFeeFormatted?: string;
+  grandTotalFormatted?: string;
+  currency?: string;
   deliveryDistanceKm?: number;
   isWithinZone: boolean;
   zoneMessage?: string;

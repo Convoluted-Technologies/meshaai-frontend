@@ -1,58 +1,71 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CustomerUser, Order } from "@/lib/types";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import { useCart, SupportedCurrency } from "@/context/CartContext";
+import {
+  getStoredCustomerSession,
+  storeCustomerSession,
+  clearCustomerSession,
+  CustomerSession,
+} from "@/lib/api/backendClient";
+import { resolveErrorMessage } from "@/lib/errorCodes";
 
-// ─── localStorage helpers ────────────────────────────────────────────────────
-const STORAGE_KEY = "Meeshaai_customer_v2";
+// Dynamically load LeafletMapPicker for address picker
+const LeafletMapPicker = dynamic(() => import("@/components/LeafletMapPicker"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-60 bg-slate-100 animate-pulse rounded-2xl flex items-center justify-center text-xs text-slate-400">
+      Loading OpenStreetMap…
+    </div>
+  ),
+});
 
-interface SavedSession {
-  token: string;
-  customerId: string;
-  name: string;
-  phone: string;
-  email: string;
+interface CustomerAddress {
+  id?: string;
+  label?: string;
+  address: string;
+  landmark?: string;
+  latitude?: number;
+  longitude?: number;
+  isDefault?: boolean;
 }
 
-function loadSession(): Partial<SavedSession> {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
+interface OrderSummary {
+  id: string;
+  code: string;
+  totalKobo: number;
+  status: string;
+  deliveryMode: string;
+  createdAt: string;
+  items: { presetName: string; qty: number; unitPriceKobo: number }[];
 }
 
-function saveSession(data: Partial<SavedSession>) {
-  try {
-    const existing = loadSession();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...existing, ...data }));
-  } catch {}
-}
-
-function clearSession() {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch {}
-}
-
-// ─── Types ───────────────────────────────────────────────────────────────────
 type AuthMode = "choice" | "login" | "register" | "register-otp";
+type ProfileTab = "orders" | "addresses" | "settings";
 
-// ─── Component ───────────────────────────────────────────────────────────────
 export default function ProfilePage() {
+  const { formatPrice, currency, setCurrency } = useCart();
+
+  const [session, setSession] = useState<CustomerSession | null>(null);
   const [authMode, setAuthMode] = useState<AuthMode>("choice");
-  const [customer, setCustomer] = useState<CustomerUser | null>(null);
-  const [authToken, setAuthToken] = useState("");
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<ProfileTab>("orders");
+
+  // Orders & Addresses
+  const [orders, setOrders] = useState<OrderSummary[]>([]);
+  const [addresses, setAddresses] = useState<CustomerAddress[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [loadingAddresses, setLoadingAddresses] = useState(false);
+
+  // Status feedback
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // Login form fields
-  const [loginId, setLoginId] = useState(""); // email or phone
+  const [loginId, setLoginId] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [showLoginPw, setShowLoginPw] = useState(false);
 
@@ -63,52 +76,84 @@ export default function ProfilePage() {
   const [regPassword, setRegPassword] = useState("");
   const [showRegPw, setShowRegPw] = useState(false);
 
-  // OTP (register verification)
+  // Register OTP
   const [otpValue, setOtpValue] = useState("");
   const [devOtp, setDevOtp] = useState("");
 
-  // ── Restore session on mount ─────────────────────────────────────────────
+  // Edit Profile Modal
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editCurrency, setEditCurrency] = useState<SupportedCurrency>("NGN");
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  // Add Address Modal
+  const [showAddAddress, setShowAddAddress] = useState(false);
+  const [newAddrLabel, setNewAddrLabel] = useState("Home");
+  const [newAddrText, setNewAddrText] = useState("");
+  const [newAddrLandmark, setNewAddrLandmark] = useState("");
+  const [newAddrLat, setNewAddrLat] = useState(9.0765);
+  const [newAddrLng, setNewAddrLng] = useState(7.3986);
+  const [showAddrMap, setShowAddrMap] = useState(false);
+  const [savingAddress, setSavingAddress] = useState(false);
+
+  // Cancel order modal
+  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancellingLoading, setCancellingLoading] = useState(false);
+
+  // Load customer session
   useEffect(() => {
-    const saved = loadSession();
-    if (saved.token && saved.customerId) {
-      setAuthToken(saved.token);
-      setCustomer({
-        id: saved.customerId,
-        name: saved.name || "",
-        phone: saved.phone || "",
-        email: saved.email,
-        createdAt: "",
-      } as CustomerUser);
-      fetchCustomerOrders(saved.token);
+    const s = getStoredCustomerSession();
+    if (s && s.token) {
+      setSession(s);
+      setEditName(s.name || "");
+      setEditEmail(s.email || "");
+      setEditCurrency(currency || "NGN");
+      fetchOrders(s.token);
+      fetchAddresses(s.token);
     }
-  }, []);
+  }, [currency]);
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
-  const formatNGN = (kobo: number) => `₦${(kobo / 100).toLocaleString()}`;
-
-  function resetForms() {
-    setError("");
-    setSuccessMsg("");
-    setLoginId("");
-    setLoginPassword("");
-    setRegName("");
-    setRegPhone("");
-    setRegEmail("");
-    setRegPassword("");
-    setOtpValue("");
-    setDevOtp("");
+  async function fetchOrders(token: string) {
+    setLoadingOrders(true);
+    try {
+      const res = await fetch("/api/me/orders", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setOrders(Array.isArray(data) ? data : data.orders || []);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setLoadingOrders(false);
+    }
   }
 
-  function goTo(mode: AuthMode) {
-    resetForms();
-    setAuthMode(mode);
+  async function fetchAddresses(token: string) {
+    setLoadingAddresses(true);
+    try {
+      const res = await fetch("/api/me/locations", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAddresses(Array.isArray(data) ? data : data.locations || data.addresses || []);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setLoadingAddresses(false);
+    }
   }
 
-  // ── Login (returning customer — no OTP) ─────────────────────────────────
+  // ── Authentication Handlers ──────────────────────────────────────────────
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     if (!loginId.trim() || !loginPassword) {
-      setError("Please enter your email or phone number and your password.");
+      setError("Please enter your email or phone number and password.");
       return;
     }
     setError("");
@@ -121,26 +166,21 @@ export default function ProfilePage() {
       });
       const data = await res.json();
       if (res.ok && data.token) {
-        const c: CustomerUser = {
+        const user: CustomerSession = {
           id: data.customer?.id || "",
           name: data.customer?.name || "",
-          phone: data.customer?.phone || "",
+          phone: data.customer?.phone || loginId,
           email: data.customer?.email,
-          createdAt: data.customer?.createdAt || new Date().toISOString(),
-          updatedAt: data.customer?.updatedAt || new Date().toISOString(),
-        };
-        setCustomer(c);
-        setAuthToken(data.token);
-        saveSession({
           token: data.token,
-          customerId: c.id,
-          name: c.name,
-          phone: c.phone,
-          email: c.email || "",
-        });
-        fetchCustomerOrders(data.token);
+        };
+        storeCustomerSession(user);
+        setSession(user);
+        setEditName(user.name);
+        setEditEmail(user.email || "");
+        fetchOrders(data.token);
+        fetchAddresses(data.token);
       } else {
-        setError(data.detail || "Invalid credentials. Please check and try again.");
+        setError(resolveErrorMessage(data, "Invalid credentials. Please try again."));
       }
     } catch {
       setError("Network error. Please try again.");
@@ -149,8 +189,7 @@ export default function ProfilePage() {
     }
   }
 
-  // ── Register step 1: submit form → backend sends OTP ────────────────────
-  async function handleRegisterSubmit(e: React.FormEvent) {
+  async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     if (!regName.trim() || !regPhone.trim() || !regEmail.trim() || !regPassword) {
       setError("All fields are required to create your account.");
@@ -171,11 +210,11 @@ export default function ProfilePage() {
       });
       const data = await res.json();
       if (res.ok) {
-        setSuccessMsg(data.message || "OTP sent to your phone. Please verify to activate your account.");
+        setSuccessMsg(data.message || "OTP verification code sent to your phone.");
         if (data.devOtp) setDevOtp(data.devOtp);
         setAuthMode("register-otp");
       } else {
-        setError(data.detail || "Registration failed. Please try again.");
+        setError(resolveErrorMessage(data, "Registration failed."));
       }
     } catch {
       setError("Network error. Please try again.");
@@ -184,11 +223,10 @@ export default function ProfilePage() {
     }
   }
 
-  // ── Register step 2: verify OTP sent during registration ────────────────
-  async function handleRegisterOTP(e: React.FormEvent) {
+  async function handleVerifyOtp(e: React.FormEvent) {
     e.preventDefault();
     if (!otpValue.trim()) {
-      setError("Please enter the OTP code sent to your phone.");
+      setError("Please enter the verification code.");
       return;
     }
     setError("");
@@ -201,470 +239,839 @@ export default function ProfilePage() {
       });
       const data = await res.json();
       if (res.ok && data.token) {
-        const c: CustomerUser = {
+        const user: CustomerSession = {
           id: data.customer?.id || "",
           name: data.customer?.name || regName,
-          phone: data.customer?.phone || regPhone,
-          email: data.customer?.email || regEmail,
-          createdAt: data.customer?.createdAt || new Date().toISOString(),
-          updatedAt: data.customer?.updatedAt || new Date().toISOString(),
-        };
-        setCustomer(c);
-        setAuthToken(data.token);
-        saveSession({
+          phone: regPhone,
+          email: regEmail,
           token: data.token,
-          customerId: c.id,
-          name: c.name,
-          phone: c.phone,
-          email: c.email || regEmail,
-        });
-        fetchCustomerOrders(data.token);
+        };
+        storeCustomerSession(user);
+        setSession(user);
+        setEditName(user.name);
+        setEditEmail(user.email || "");
+        fetchOrders(data.token);
+        fetchAddresses(data.token);
       } else {
-        setError(data.detail || "Invalid or expired OTP. Please try again.");
+        setError(resolveErrorMessage(data, "Invalid code."));
       }
     } catch {
-      setError("Network error. Please try again.");
+      setError("Network error verifying code.");
     } finally {
       setLoading(false);
     }
   }
 
-  // ── Fetch order history ───────────────────────────────────────────────────
-  async function fetchCustomerOrders(token: string) {
-    try {
-      const res = await fetch("/api/me/orders", {
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
-      const data = await res.json();
-      if (res.ok && Array.isArray(data)) setOrders(data);
-      else if (res.ok && data.orders) setOrders(data.orders);
-    } catch (err) {
-      console.error("Error fetching orders:", err);
-    }
-  }
-
   function handleSignOut() {
-    clearSession();
-    setCustomer(null);
+    clearCustomerSession();
+    setSession(null);
     setOrders([]);
-    setAuthToken("");
-    resetForms();
+    setAddresses([]);
     setAuthMode("choice");
   }
 
-  // ────────────────────────────────────────────────────────────────────────────
-  // RENDER
-  // ────────────────────────────────────────────────────────────────────────────
-  return (
-    <div className="min-h-screen bg-slate-950">
-      <div className="mt-4 mb-10 inset-x-0 z-5 pointer-events-auto">
-        <Navbar />
-      </div>
+  // ── Profile Edit ─────────────────────────────────────────────────────────
+  async function handleSaveProfile(e: React.FormEvent) {
+    e.preventDefault();
+    if (!session?.token) return;
+    setSavingProfile(true);
+    setError("");
+    try {
+      const res = await fetch("/api/me/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.token}`,
+        },
+        body: JSON.stringify({
+          name: editName.trim(),
+          email: editEmail.trim(),
+          preferredCurrency: editCurrency,
+        }),
+      });
+      if (res.ok) {
+        storeCustomerSession({
+          name: editName.trim(),
+          email: editEmail.trim(),
+        });
+        setSession((prev) =>
+          prev ? { ...prev, name: editName.trim(), email: editEmail.trim() } : null
+        );
+        setCurrency(editCurrency);
+        setShowEditProfile(false);
+      } else {
+        const data = await res.json();
+        setError(resolveErrorMessage(data, "Failed to update profile."));
+      }
+    } catch {
+      setError("Network error updating profile.");
+    } finally {
+      setSavingProfile(false);
+    }
+  }
 
-      <div className="max-w-2xl mx-auto px-4 pb-16 space-y-8">
-        {/* Page heading */}
-        <div className="text-center space-y-2 pt-4">
-          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-3xl mx-auto">
-            👤
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
-            My Account
-          </h1>
-          <p className="text-sm text-slate-400">
-            {customer
-              ? "View your profile and order history"
-              : "Sign in or create a new account"}
+  // ── Address Book Actions ─────────────────────────────────────────────────
+  async function handleAddAddress(e: React.FormEvent) {
+    e.preventDefault();
+    if (!session?.token || !newAddrText.trim()) return;
+    setSavingAddress(true);
+    try {
+      const res = await fetch("/api/me/locations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.token}`,
+        },
+        body: JSON.stringify({
+          label: newAddrLabel,
+          address: newAddrText.trim(),
+          landmark: newAddrLandmark.trim(),
+          latitude: newAddrLat,
+          longitude: newAddrLng,
+        }),
+      });
+      if (res.ok) {
+        setShowAddAddress(false);
+        setNewAddrText("");
+        setNewAddrLandmark("");
+        fetchAddresses(session.token);
+      } else {
+        const data = await res.json();
+        setError(resolveErrorMessage(data, "Failed to save address."));
+      }
+    } catch {
+      setError("Network error saving address.");
+    } finally {
+      setSavingAddress(false);
+    }
+  }
+
+  async function handleDeleteAddress(addrId: string) {
+    if (!session?.token) return;
+    try {
+      const res = await fetch(`/api/me/locations/${addrId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${session.token}` },
+      });
+      if (res.ok) {
+        setAddresses((prev) => prev.filter((a) => a.id !== addrId));
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // ── Order Cancellation ───────────────────────────────────────────────────
+  async function handleConfirmCancel() {
+    if (!cancellingOrderId || !session?.phone) return;
+    setCancellingLoading(true);
+    try {
+      const res = await fetch(`/api/orders/${cancellingOrderId}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: session.phone,
+          reason: cancelReason || "Customer cancelled from profile dashboard",
+        }),
+      });
+      if (res.ok) {
+        setCancellingOrderId(null);
+        setCancelReason("");
+        if (session.token) fetchOrders(session.token);
+      } else {
+        const data = await res.json();
+        alert(resolveErrorMessage(data, "Unable to cancel this order."));
+      }
+    } catch {
+      alert("Network error cancelling order.");
+    } finally {
+      setCancellingLoading(false);
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-[#fafafa]">
+      <Navbar />
+
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 md:py-12">
+        {/* Page Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">My Account</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            {session
+              ? `Welcome back, ${session.name || "Customer"}`
+              : "Sign in to access your orders and saved addresses"}
           </p>
         </div>
 
-        {/* ── Logged-in state ─────────────────────────────────────────────── */}
-        {customer ? (
+        {/* ── Logged In Experience ────────────────────────────────────────── */}
+        {session ? (
           <div className="space-y-6">
-            {/* Profile card */}
-            <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-2xl font-black text-amber-400 shrink-0">
-                  {(customer.name || "?")[0].toUpperCase()}
+            {/* Customer Card */}
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+              <div className="flex items-center gap-5">
+                <div className="w-16 h-16 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center text-2xl font-black text-[#e31b23]">
+                  {(session.name || "M")[0].toUpperCase()}
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-white leading-tight">
-                    {customer.name || "Customer"}
-                  </h2>
-                  {customer.email && (
-                    <p className="text-xs text-slate-400 mt-0.5">{customer.email}</p>
+                  <h2 className="text-xl font-black text-slate-900">{session.name || "Guest Customer"}</h2>
+                  <p className="text-xs text-slate-500 font-mono mt-0.5">{session.phone}</p>
+                  {session.email && (
+                    <p className="text-xs text-slate-400 mt-0.5">{session.email}</p>
                   )}
-                  <p className="text-sm font-mono text-amber-400 mt-0.5">
-                    {customer.phone}
-                  </p>
                 </div>
               </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button
+                  onClick={() => setShowEditProfile(true)}
+                  className="flex-1 sm:flex-none px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all"
+                >
+                  ✏️ Edit Profile
+                </button>
+                <button
+                  onClick={handleSignOut}
+                  className="flex-1 sm:flex-none px-4 py-2.5 bg-red-50 hover:bg-red-100 text-[#e31b23] text-xs font-bold rounded-xl transition-all"
+                >
+                  Sign Out
+                </button>
+              </div>
+            </div>
+
+            {/* Navigation Tabs */}
+            <div className="flex bg-slate-200/60 p-1.5 rounded-2xl max-w-md">
               <button
-                onClick={handleSignOut}
-                className="shrink-0 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition-colors"
+                onClick={() => setActiveTab("orders")}
+                className={`flex-1 py-2.5 text-xs font-black rounded-xl transition-all ${
+                  activeTab === "orders"
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
               >
-                Sign Out
+                📦 Orders ({orders.length})
+              </button>
+              <button
+                onClick={() => setActiveTab("addresses")}
+                className={`flex-1 py-2.5 text-xs font-black rounded-xl transition-all ${
+                  activeTab === "addresses"
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                📍 Saved Addresses ({addresses.length})
               </button>
             </div>
 
-            {/* Order history */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold text-white">Order History</h3>
-                <span className="text-xs bg-slate-800 text-amber-400 px-2.5 py-0.5 rounded-full font-mono border border-slate-700">
-                  {orders.length}
-                </span>
-              </div>
-
-              {orders.length === 0 ? (
-                <div className="rounded-2xl bg-slate-900 border border-slate-800 p-8 text-center">
-                  <div className="text-3xl mb-3">📦</div>
-                  <p className="text-slate-400 text-sm">No orders yet. Place your first order!</p>
-                  <Link
-                    href="/"
-                    className="inline-block mt-4 px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm rounded-xl transition-colors"
-                  >
-                    Browse Menu
-                  </Link>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {orders.map((o) => (
-                    <div
-                      key={o.id}
-                      className="rounded-2xl bg-slate-900 border border-slate-800 p-4 flex items-center justify-between gap-4"
+            {/* Tab 1: Orders */}
+            {activeTab === "orders" && (
+              <div className="space-y-4">
+                {loadingOrders ? (
+                  <div className="p-12 text-center text-slate-400 text-sm">Loading order history…</div>
+                ) : orders.length === 0 ? (
+                  <div className="bg-white rounded-3xl p-12 text-center border border-slate-100 shadow-sm space-y-3">
+                    <div className="text-4xl">🍳</div>
+                    <h3 className="font-bold text-slate-900">No orders placed yet</h3>
+                    <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                      Explore our delicious dishes and experience fresh roadside-style meals delivered to your door.
+                    </p>
+                    <Link
+                      href="/menu"
+                      className="inline-block mt-2 px-6 py-3 bg-[#e31b23] hover:bg-[#c9151c] text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-red-500/20 transition-all"
                     >
-                      <div className="min-w-0">
-                        <span className="font-bold text-amber-400 font-mono text-sm block">
-                          #{o.code}
-                        </span>
-                        <span className="text-xs text-slate-300 block truncate mt-0.5">
-                          {o.items.map((i) => `${i.qty}× ${i.presetName}`).join(", ")}
-                        </span>
-                        <span className="block text-slate-500 text-[10px] mt-1">
-                          {new Date(o.createdAt).toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="text-right shrink-0 space-y-1">
-                        <span className="font-mono font-bold text-white text-sm block">
-                          {formatNGN(o.totalKobo)}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          // ── Auth forms ────────────────────────────────────────────────────
-          <div className="max-w-md mx-auto">
+                      Browse Menu
+                    </Link>
+                  </div>
+                ) : (
+                  orders.map((o) => {
+                    const isCancellable = o.status === "PAID" || o.status === "CONFIRMED";
+                    return (
+                      <div
+                        key={o.id || o.code}
+                        className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                      >
+                        <div className="space-y-1.5 min-w-0">
+                          <div className="flex items-center gap-3">
+                            <span className="font-mono font-black text-[#e31b23] text-sm">
+                              #{o.code}
+                            </span>
+                            <span
+                              className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full ${
+                                o.status === "DELIVERED"
+                                  ? "bg-emerald-100 text-emerald-800"
+                                  : o.status === "CANCELLED"
+                                  ? "bg-rose-100 text-rose-800"
+                                  : "bg-amber-100 text-amber-800"
+                              }`}
+                            >
+                              {o.status}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-600 truncate max-w-md">
+                            {o.items?.map((i) => `${i.qty}× ${i.presetName}`).join(", ") || "Meal Order"}
+                          </p>
+                          <p className="text-[11px] text-slate-400">
+                            {new Date(o.createdAt).toLocaleString()}
+                          </p>
+                        </div>
 
-            {/* ── Choice screen ───────────────────────────────────────────── */}
-            {authMode === "choice" && (
-              <div className="rounded-2xl bg-slate-900 border border-slate-800 p-8 space-y-4">
-                <h2 className="text-xl font-bold text-white text-center">Welcome back 👋</h2>
-                <p className="text-sm text-slate-400 text-center">
-                  Are you a new customer or returning?
-                </p>
-                <button
-                  onClick={() => goTo("login")}
-                  className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm transition-all shadow-md shadow-amber-500/20"
-                >
-                  Sign In — I have an account
-                </button>
-                <button
-                  onClick={() => goTo("register")}
-                  className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-sm border border-slate-700 transition-all"
-                >
-                  Create Account — I&apos;m new here
-                </button>
+                        <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
+                          <span className="font-black text-slate-900 text-base">
+                            {formatPrice(o.totalKobo)}
+                          </span>
+
+                          <div className="flex items-center gap-2">
+                            <Link
+                              href={`/orders/track?code=${o.code}&phone=${encodeURIComponent(
+                                session.phone
+                              )}`}
+                              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all"
+                            >
+                              Live Tracker →
+                            </Link>
+                            {isCancellable && (
+                              <button
+                                onClick={() => setCancellingOrderId(o.code)}
+                                className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-[#e31b23] text-xs font-bold rounded-xl transition-all"
+                              >
+                                Cancel
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             )}
 
-            {/* ── Login form (returning customer — no OTP) ────────────────── */}
-            {authMode === "login" && (
-              <div className="rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden">
-                {/* Header */}
-                <div className="px-6 pt-6 pb-4 border-b border-slate-800">
+            {/* Tab 2: Saved Addresses */}
+            {activeTab === "addresses" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-slate-900 text-sm">Your Delivery Locations</h3>
                   <button
-                    onClick={() => goTo("choice")}
-                    className="text-xs text-slate-400 hover:text-slate-200 mb-3 flex items-center gap-1 transition-colors"
+                    onClick={() => setShowAddAddress(true)}
+                    className="px-4 py-2 bg-[#e31b23] hover:bg-[#c9151c] text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-red-500/20"
                   >
-                    ← Back
+                    + Add New Address
                   </button>
-                  <h2 className="text-xl font-bold text-white">Sign In</h2>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Welcome back! Enter your credentials below.
-                  </p>
                 </div>
 
-                <form onSubmit={handleLogin} className="p-6 space-y-4">
-                  {/* Email or phone */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
-                      Email or Phone Number
+                {loadingAddresses ? (
+                  <div className="p-12 text-center text-slate-400 text-sm">Loading addresses…</div>
+                ) : addresses.length === 0 ? (
+                  <div className="bg-white rounded-3xl p-10 text-center border border-slate-100 shadow-sm space-y-2">
+                    <div className="text-3xl">🏠</div>
+                    <p className="text-sm font-bold text-slate-900">No saved addresses</p>
+                    <p className="text-xs text-slate-500">
+                      Save your home, office, or favorite spots to checkout faster next time.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {addresses.map((addr, idx) => (
+                      <div
+                        key={addr.id || idx}
+                        className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex flex-col justify-between gap-4"
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="px-2.5 py-0.5 bg-slate-100 text-slate-800 text-[11px] font-bold rounded-lg uppercase">
+                              {addr.label || "Address"}
+                            </span>
+                            {addr.id && (
+                              <button
+                                onClick={() => handleDeleteAddress(addr.id!)}
+                                className="text-xs text-slate-400 hover:text-red-600 transition-colors"
+                              >
+                                🗑️ Delete
+                              </button>
+                            )}
+                          </div>
+                          <p className="text-xs font-bold text-slate-900">{addr.address}</p>
+                          {addr.landmark && (
+                            <p className="text-[11px] text-slate-500 mt-1">Landmark: {addr.landmark}</p>
+                          )}
+                        </div>
+                        {addr.latitude && addr.longitude && (
+                          <p className="text-[10px] text-slate-400 font-mono">
+                            📍 {addr.latitude.toFixed(4)}, {addr.longitude.toFixed(4)}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          /* ── Non-Authenticated State ───────────────────────────────────── */
+          <div className="max-w-md mx-auto">
+            {authMode === "choice" && (
+              <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm text-center space-y-5">
+                <div className="w-16 h-16 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center text-3xl mx-auto">
+                  👋
+                </div>
+                <h2 className="text-2xl font-black text-slate-900">Welcome to Meeshaai</h2>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Sign in to view your recent orders, manage your saved delivery addresses, or register a new account.
+                </p>
+
+                <div className="space-y-3 pt-2">
+                  <button
+                    onClick={() => setAuthMode("login")}
+                    className="w-full py-3.5 bg-[#e31b23] hover:bg-[#c9151c] text-white text-xs font-black uppercase tracking-wider rounded-2xl shadow-lg shadow-red-500/20 transition-all"
+                  >
+                    Sign In (Returning Customer)
+                  </button>
+                  <button
+                    onClick={() => setAuthMode("register")}
+                    className="w-full py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-black uppercase tracking-wider rounded-2xl transition-all"
+                  >
+                    Create Account (New User)
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Returning customer login */}
+            {authMode === "login" && (
+              <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm space-y-5">
+                <button
+                  onClick={() => setAuthMode("choice")}
+                  className="text-xs font-bold text-slate-400 hover:text-slate-700 flex items-center gap-1"
+                >
+                  ← Back
+                </button>
+                <div>
+                  <h2 className="text-xl font-black text-slate-900">Sign In</h2>
+                  <p className="text-xs text-slate-500 mt-1">Enter your login credentials</p>
+                </div>
+
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                      Email or Phone
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. adaeze@email.com or 08012345678"
+                      placeholder="08012345678 or name@domain.com"
                       value={loginId}
-                      onChange={(e) => { setLoginId(e.target.value); setError(""); }}
-                      autoComplete="username"
-                      className="w-full text-sm bg-slate-950 border border-slate-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/15 rounded-xl px-4 py-3 text-slate-100 outline-none transition-all"
+                      onChange={(e) => setLoginId(e.target.value)}
+                      className="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:border-[#e31b23]"
                     />
                   </div>
-
-                  {/* Password */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
                       Password
                     </label>
                     <div className="relative">
                       <input
                         type={showLoginPw ? "text" : "password"}
-                        placeholder="Your password"
+                        placeholder="••••••••"
                         value={loginPassword}
-                        onChange={(e) => { setLoginPassword(e.target.value); setError(""); }}
-                        autoComplete="current-password"
-                        className="w-full text-sm bg-slate-950 border border-slate-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/15 rounded-xl px-4 py-3 pr-12 text-slate-100 outline-none transition-all"
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        className="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 pr-12 text-slate-900 focus:outline-none focus:border-[#e31b23]"
                       />
                       <button
                         type="button"
-                        onClick={() => setShowLoginPw((v) => !v)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 text-xs px-1 transition-colors"
+                        onClick={() => setShowLoginPw(!showLoginPw)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-slate-600"
                       >
                         {showLoginPw ? "Hide" : "Show"}
                       </button>
                     </div>
                   </div>
 
-                  {error && (
-                    <p className="text-xs text-red-400 font-medium bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-lg">
-                      {error}
-                    </p>
-                  )}
+                  {error && <p className="text-xs text-[#e31b23] font-medium">{error}</p>}
 
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-slate-950 font-bold rounded-xl text-sm transition-all shadow-md shadow-amber-500/20"
+                    className="w-full py-3.5 bg-[#e31b23] hover:bg-[#c9151c] text-white text-xs font-black uppercase tracking-wider rounded-2xl shadow-lg shadow-red-500/20 transition-all disabled:opacity-50"
                   >
                     {loading ? "Signing in…" : "Sign In"}
                   </button>
 
-                  <p className="text-center text-xs text-slate-500">
-                    New here?{" "}
+                  <p className="text-center text-xs text-slate-400">
+                    New customer?{" "}
                     <button
                       type="button"
-                      onClick={() => goTo("register")}
-                      className="text-amber-400 hover:text-amber-300 font-semibold transition-colors"
+                      onClick={() => setAuthMode("register")}
+                      className="text-[#e31b23] font-bold hover:underline"
                     >
-                      Create an account
+                      Create account
                     </button>
                   </p>
                 </form>
               </div>
             )}
 
-            {/* ── Registration form (new customer) ────────────────────────── */}
+            {/* New registration */}
             {authMode === "register" && (
-              <div className="rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden">
-                {/* Header */}
-                <div className="px-6 pt-6 pb-4 border-b border-slate-800">
-                  <button
-                    onClick={() => goTo("choice")}
-                    className="text-xs text-slate-400 hover:text-slate-200 mb-3 flex items-center gap-1 transition-colors"
-                  >
-                    ← Back
-                  </button>
-                  <h2 className="text-xl font-bold text-white">Create Account</h2>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Fill in your details. We&apos;ll send a verification code to your phone.
-                  </p>
+              <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm space-y-5">
+                <button
+                  onClick={() => setAuthMode("choice")}
+                  className="text-xs font-bold text-slate-400 hover:text-slate-700 flex items-center gap-1"
+                >
+                  ← Back
+                </button>
+                <div>
+                  <h2 className="text-xl font-black text-slate-900">Create Account</h2>
+                  <p className="text-xs text-slate-500 mt-1">We will send a code to verify your phone</p>
                 </div>
 
-                <form onSubmit={handleRegisterSubmit} className="p-6 space-y-4">
-                  {/* Full name */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
+                <form onSubmit={handleRegister} className="space-y-3.5">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
                       Full Name
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. Adaeze Okonkwo"
+                      placeholder="Adaeze Okonkwo"
                       value={regName}
-                      onChange={(e) => { setRegName(e.target.value); setError(""); }}
-                      autoComplete="name"
-                      className="w-full text-sm bg-slate-950 border border-slate-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/15 rounded-xl px-4 py-3 text-slate-100 outline-none transition-all"
+                      onChange={(e) => setRegName(e.target.value)}
+                      className="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-[#e31b23]"
                     />
                   </div>
-
-                  {/* Phone */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
                       Phone Number
                     </label>
                     <input
                       type="tel"
-                      placeholder="e.g. 08012345678"
+                      placeholder="08012345678"
                       value={regPhone}
-                      onChange={(e) => { setRegPhone(e.target.value); setError(""); }}
-                      autoComplete="tel"
-                      className="w-full text-sm bg-slate-950 border border-slate-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/15 rounded-xl px-4 py-3 text-slate-100 font-mono outline-none transition-all"
+                      onChange={(e) => setRegPhone(e.target.value)}
+                      className="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 font-mono focus:outline-none focus:border-[#e31b23]"
                     />
-                    <p className="text-[11px] text-slate-500">
-                      A verification code will be sent to this number.
-                    </p>
                   </div>
-
-                  {/* Email */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
                       Email Address
                     </label>
                     <input
                       type="email"
-                      placeholder="e.g. adaeze@email.com"
+                      placeholder="adaeze@example.com"
                       value={regEmail}
-                      onChange={(e) => { setRegEmail(e.target.value); setError(""); }}
-                      autoComplete="email"
-                      className="w-full text-sm bg-slate-950 border border-slate-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/15 rounded-xl px-4 py-3 text-slate-100 outline-none transition-all"
+                      onChange={(e) => setRegEmail(e.target.value)}
+                      className="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-[#e31b23]"
                     />
                   </div>
-
-                  {/* Password */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
                       Password
                     </label>
                     <div className="relative">
                       <input
                         type={showRegPw ? "text" : "password"}
-                        placeholder="Create a strong password"
+                        placeholder="Choose a password"
                         value={regPassword}
-                        onChange={(e) => { setRegPassword(e.target.value); setError(""); }}
-                        autoComplete="new-password"
-                        className="w-full text-sm bg-slate-950 border border-slate-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/15 rounded-xl px-4 py-3 pr-12 text-slate-100 outline-none transition-all"
+                        onChange={(e) => setRegPassword(e.target.value)}
+                        className="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 pr-12 text-slate-900 focus:outline-none focus:border-[#e31b23]"
                       />
                       <button
                         type="button"
-                        onClick={() => setShowRegPw((v) => !v)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 text-xs px-1 transition-colors"
+                        onClick={() => setShowRegPw(!showRegPw)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-slate-600"
                       >
                         {showRegPw ? "Hide" : "Show"}
                       </button>
                     </div>
                   </div>
 
-                  {error && (
-                    <p className="text-xs text-red-400 font-medium bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-lg">
-                      {error}
-                    </p>
-                  )}
+                  {error && <p className="text-xs text-[#e31b23] font-medium">{error}</p>}
 
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-slate-950 font-bold rounded-xl text-sm transition-all shadow-md shadow-amber-500/20"
+                    className="w-full py-3.5 bg-[#e31b23] hover:bg-[#c9151c] text-white text-xs font-black uppercase tracking-wider rounded-2xl shadow-lg shadow-red-500/20 transition-all disabled:opacity-50"
                   >
-                    {loading ? "Creating account…" : "Continue — Send Verification Code"}
+                    {loading ? "Sending code…" : "Send Verification Code"}
                   </button>
-
-                  <p className="text-center text-xs text-slate-500">
-                    Already have an account?{" "}
-                    <button
-                      type="button"
-                      onClick={() => goTo("login")}
-                      className="text-amber-400 hover:text-amber-300 font-semibold transition-colors"
-                    >
-                      Sign in
-                    </button>
-                  </p>
                 </form>
               </div>
             )}
 
-            {/* ── OTP verification (after registration) ───────────────────── */}
+            {/* OTP verification */}
             {authMode === "register-otp" && (
-              <div className="rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden">
-                {/* Header */}
-                <div className="px-6 pt-6 pb-4 border-b border-slate-800">
-                  <button
-                    onClick={() => goTo("register")}
-                    className="text-xs text-slate-400 hover:text-slate-200 mb-3 flex items-center gap-1 transition-colors"
-                  >
-                    ← Back
-                  </button>
-                  <h2 className="text-xl font-bold text-white">Verify Your Phone</h2>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Enter the 6-digit code sent to{" "}
-                    <span className="font-mono text-amber-400 font-bold">{regPhone}</span>
+              <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm space-y-5">
+                <button
+                  onClick={() => setAuthMode("register")}
+                  className="text-xs font-bold text-slate-400 hover:text-slate-700 flex items-center gap-1"
+                >
+                  ← Back
+                </button>
+                <div>
+                  <h2 className="text-xl font-black text-slate-900">Verify Phone</h2>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Enter the code sent to <span className="font-mono font-bold text-slate-900">{regPhone}</span>
                   </p>
                 </div>
 
-                <form onSubmit={handleRegisterOTP} className="p-6 space-y-5">
-                  {/* Success banner */}
-                  {successMsg && (
-                    <div className="flex items-start gap-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs px-3 py-2.5 rounded-lg">
-                      <span className="shrink-0">✅</span>
-                      <span>{successMsg}</span>
+                <form onSubmit={handleVerifyOtp} className="space-y-4">
+                  {devOtp && (
+                    <div className="p-2.5 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-xl font-mono">
+                      Dev code: {devOtp}
                     </div>
                   )}
 
-                  {/* OTP input */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block text-center">
-                      Verification Code
-                    </label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      placeholder="• • • • • •"
-                      value={otpValue}
-                      onChange={(e) => { setOtpValue(e.target.value.replace(/\D/g, "").slice(0, 6)); setError(""); }}
-                      maxLength={6}
-                      className="w-full text-2xl font-black bg-slate-950 border border-slate-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/15 rounded-xl px-4 py-4 text-amber-400 font-mono text-center tracking-[0.4em] outline-none transition-all"
-                    />
-                    {devOtp && (
-                      <p className="text-[10px] text-center text-slate-600 font-mono">
-                        Dev code: {devOtp}
-                      </p>
-                    )}
-                  </div>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="000000"
+                    value={otpValue}
+                    onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, ""))}
+                    className="w-full text-2xl font-black text-center tracking-[0.4em] font-mono bg-slate-50 border border-slate-200 rounded-xl py-3 focus:outline-none focus:border-[#e31b23]"
+                  />
 
-                  {error && (
-                    <p className="text-xs text-red-400 font-medium bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-lg text-center">
-                      {error}
-                    </p>
-                  )}
+                  {error && <p className="text-xs text-[#e31b23] font-medium">{error}</p>}
 
                   <button
                     type="submit"
                     disabled={loading || otpValue.length < 4}
-                    className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-slate-950 font-bold rounded-xl text-sm transition-all shadow-md shadow-amber-500/20"
+                    className="w-full py-3.5 bg-[#e31b23] hover:bg-[#c9151c] text-white text-xs font-black uppercase tracking-wider rounded-2xl shadow-lg shadow-red-500/20 transition-all disabled:opacity-50"
                   >
-                    {loading ? "Verifying…" : "Verify & Activate Account"}
+                    {loading ? "Verifying…" : "Activate & Continue"}
                   </button>
-
-                  <p className="text-center text-xs text-slate-500">
-                    Didn&apos;t get a code?{" "}
-                    <button
-                      type="button"
-                      onClick={() => goTo("register")}
-                      className="text-amber-400 hover:text-amber-300 font-semibold transition-colors"
-                    >
-                      Go back and resend
-                    </button>
-                  </p>
                 </form>
               </div>
             )}
           </div>
         )}
-      </div>
+
+        {/* ── Modal: Edit Profile ────────────────────────────────────────── */}
+        {showEditProfile && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 border border-slate-100 shadow-2xl space-y-5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-black text-slate-900">Edit Profile</h3>
+                <button
+                  onClick={() => setShowEditProfile(false)}
+                  className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold text-sm"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveProfile} className="space-y-4">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-[#e31b23]"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    className="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-[#e31b23]"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Preferred Currency
+                  </label>
+                  <select
+                    value={editCurrency}
+                    onChange={(e) => setEditCurrency(e.target.value as SupportedCurrency)}
+                    className="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-[#e31b23]"
+                  >
+                    <option value="NGN">NGN (₦ Nigerian Naira)</option>
+                    <option value="USD">USD ($ US Dollar)</option>
+                    <option value="GBP">GBP (£ British Pound)</option>
+                    <option value="EUR">EUR (€ Euro)</option>
+                    <option value="CAD">CAD ($ Canadian Dollar)</option>
+                    <option value="GHS">GHS (₵ Ghanaian Cedi)</option>
+                    <option value="KES">KES (KSh Kenyan Shilling)</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditProfile(false)}
+                    className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={savingProfile}
+                    className="flex-1 py-3 bg-[#e31b23] hover:bg-[#c9151c] text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-red-500/20"
+                  >
+                    {savingProfile ? "Saving…" : "Save Changes"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ── Modal: Add Saved Address ─────────────────────────────────────── */}
+        {showAddAddress && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 border border-slate-100 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-black text-slate-900">Add New Address</h3>
+                <button
+                  onClick={() => setShowAddAddress(false)}
+                  className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold text-sm"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleAddAddress} className="space-y-4">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Label
+                  </label>
+                  <div className="flex gap-2">
+                    {["Home", "Office", "Gym", "Other"].map((lbl) => (
+                      <button
+                        key={lbl}
+                        type="button"
+                        onClick={() => setNewAddrLabel(lbl)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                          newAddrLabel === lbl
+                            ? "bg-[#e31b23] text-white border-[#e31b23]"
+                            : "bg-slate-50 text-slate-600 border-slate-200"
+                        }`}
+                      >
+                        {lbl}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                      Address Details
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddrMap(!showAddrMap)}
+                      className="text-xs font-bold text-[#e31b23] hover:underline"
+                    >
+                      📍 {showAddrMap ? "Hide Map" : "Pin on Map"}
+                    </button>
+                  </div>
+
+                  {showAddrMap && (
+                    <div className="border border-slate-200 rounded-2xl p-2 bg-slate-50 mb-2">
+                      <LeafletMapPicker
+                        initialLat={newAddrLat}
+                        initialLng={newAddrLng}
+                        onLocationSelected={(latVal, lngVal, addrStr) => {
+                          setNewAddrLat(latVal);
+                          setNewAddrLng(lngVal);
+                          setNewAddrText(addrStr);
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  <input
+                    type="text"
+                    placeholder="Street, estate, or area name"
+                    value={newAddrText}
+                    onChange={(e) => setNewAddrText(e.target.value)}
+                    required
+                    className="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-[#e31b23]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                    Landmark (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Near Big Church, Opposite Supermarket"
+                    value={newAddrLandmark}
+                    onChange={(e) => setNewAddrLandmark(e.target.value)}
+                    className="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-[#e31b23]"
+                  />
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddAddress(false)}
+                    className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={savingAddress}
+                    className="flex-1 py-3 bg-[#e31b23] hover:bg-[#c9151c] text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-red-500/20"
+                  >
+                    {savingAddress ? "Saving…" : "Save Location"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ── Modal: Cancel Order ─────────────────────────────────────────── */}
+        {cancellingOrderId && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 border border-slate-100 shadow-2xl space-y-4">
+              <h3 className="text-lg font-black text-slate-900">Cancel Order #{cancellingOrderId}?</h3>
+              <p className="text-xs text-slate-500">
+                Are you sure you want to cancel this order? If paid, a refund will be initiated to your payment method.
+              </p>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                  Reason for Cancellation
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Ordered by mistake, changed mind"
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  className="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-900 focus:outline-none focus:border-[#e31b23]"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setCancellingOrderId(null)}
+                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl"
+                >
+                  Keep Order
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmCancel}
+                  disabled={cancellingLoading}
+                  className="flex-1 py-2.5 bg-[#e31b23] hover:bg-[#c9151c] text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-red-500/20"
+                >
+                  {cancellingLoading ? "Cancelling…" : "Confirm Cancel"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
